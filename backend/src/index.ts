@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { ENV } from "./config/env";
-import userRouter from "./routes/userRoutes"; // Import router ที่คุณสร้างไว้
+import userRouter from "./routes/userRoutes"; 
+import concertRouter from "./routes/concertRoutes";
 import cors from 'cors'
 
 
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/users", userRouter);
+app.use("/concert", concertRouter)
 
 
 app.listen(ENV.PORT, () => {
