@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+model Role {
+  role_id   Int    @id @default(autoincrement())
+  role_name String @unique // admin, staff, user
+  users     User[]
+}
+
+model User {
+  user_id     String       @id 
+  user_name   String
+  phoneNumber String    @unique
+  email       String    @unique
+  image_url   String?
+  status      Boolean   @default(true) // ture= active , fale = deleted
+  role_id     Int
+  role        Role      @relation(fields: [role_id], references: [role_id])
+  bookings    Booking[]
+  payments     Payment[]
+}
+
+model Concert {
+  concert_id           Int       @id @default(autoincrement())
+  concert_name         String
+  concert_detail       String?
+  image_url            String?
+  location              String
+  show_date            DateTime
+  sale_start_time      DateTime
+  max_tickets_per_user Int       @default(2)
+  zones                Zone[]
+  bookings             Booking[]
+}
+
+model Zone {
+  zone_id    Int     @id @default(autoincrement())
+  zone_name  String
+  price      Float
+  concert_id Int
+  concert    Concert @relation(fields: [concert_id], references: [concert_id])
+  seats      Seat[] // 1 zone to many seat 
+}
+
+model Seat {
+  seat_id        Int           @id @default(autoincrement())
+  zone_id        Int
+  zone           Zone          @relation(fields: [zone_id], references: [zone_id])
+  seat_number    String
+  status         String        @default("available") // available, reserved, sold
+  reserved_until DateTime?
+  book_item_id   Int?
+  booking_items  BookingItem[] // 1 seat -> many bookingItem
+}
+
+model Booking {
+  booking_id    Int           @id @default(autoincrement())
+  user_id       String
+  user          User          @relation(fields: [user_id], references: [user_id])
+  concert_id    Int
+  concert       Concert       @relation(fields: [concert_id], references: [concert_id])
+  total_price   Float
+  status        String        @default("pending") // pending, success, expired
+  created_at    DateTime      @default(now())
+  booking_items BookingItem[]
+  payments      Payment[]
+  invoices      Invoice[]
+}
+
+model BookingItem {
+  booking_item_id Int     @id @default(autoincrement())
+  booking_id      Int
+  booking         Booking @relation(fields: [booking_id], references: [booking_id])
+  seat_id         Int
+  seat            Seat    @relation(fields: [seat_id], references: [seat_id])
+}
+
+model Payment {
+  payment_id     Int      @id @default(autoincrement())
+  user_id        String
+  user           User     @relation(fields: [user_id], references: [user_id])
+  booking_id     Int
+  booking        Booking  @relation(fields: [booking_id], references: [booking_id])
+  amount         Float
+  payment_method String
+  transaction_id String?  @unique
+  paid_at        DateTime
+  status         String   @default("pending") // success, pending, fail
+  receipts      Receipt[]
+}
+
+model Invoice {
+  invoice_id     Int      @id @default(autoincrement())
+  booking_id     Int
+  booking        Booking  @relation(fields: [booking_id], references: [booking_id])
+  invoice_number String   @unique
+  due_date       DateTime
+  status         String   @default("unpaid") // unpaid, paid, cancelled
+  created_at     DateTime @default(now())
+}
+
+model Receipt {
+  receipt_id     Int      @id @default(autoincrement())
+  payment_id     Int
+  payment        Payment  @relation(fields: [payment_id], references: [payment_id])
+  receipt_number String   @unique
+  amount_price   Float
+  issued_at      DateTime @default(now())
+  pdf_url        String?
+}
