@@ -1,18 +1,38 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  
+
 }
+
+enum BookingStatus {
+  PENDING
+  SUCCESS
+  EXPIRED
+  CANCELLED
+}
+
+enum SeatStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+// --- Models ---
 
 model Role {
   role_id   Int    @id @default(autoincrement())
@@ -21,16 +41,16 @@ model Role {
 }
 
 model User {
-  user_id     String       @id 
+  user_id     String    @id // ใช้ Firebase UID ที่นี่
   user_name   String
-  phoneNumber String    @unique
+  phoneNumber String?   @unique // Social login บางเจ้าอาจไม่มีเบอร์โทร ให้เป็น optional
   email       String    @unique
   image_url   String?
-  status      Boolean   @default(true) // ture= active , fale = deleted
-  role_id     Int
+  status      Boolean   @default(true)
+  role_id     Int       @default(1) // กำหนดค่าเริ่มต้นเป็น User ปกติ
   role        Role      @relation(fields: [role_id], references: [role_id])
   bookings    Booking[]
-  payments     Payment[]
+  payments    Payment[]
 }
 
 model Concert {
@@ -38,7 +58,7 @@ model Concert {
   concert_name         String
   concert_detail       String?
   image_url            String?
-  location              String
+  location             String
   show_date            DateTime
   sale_start_time      DateTime
   max_tickets_per_user Int       @default(2)
@@ -52,7 +72,7 @@ model Zone {
   price      Float
   concert_id Int
   concert    Concert @relation(fields: [concert_id], references: [concert_id])
-  seats      Seat[] // 1 zone to many seat 
+  seats      Seat[]
 }
 
 model Seat {
@@ -60,10 +80,12 @@ model Seat {
   zone_id        Int
   zone           Zone          @relation(fields: [zone_id], references: [zone_id])
   seat_number    String
-  status         String        @default("available") // available, reserved, sold
+  status         SeatStatus    @default(AVAILABLE)
   reserved_until DateTime?
-  book_item_id   Int?
-  booking_items  BookingItem[] // 1 seat -> many bookingItem
+  booking_items  BookingItem[]
+
+  // ป้องกันเลขที่นั่งซ้ำกันในโซนเดียวกัน
+  @@unique([zone_id, seat_number])
 }
 
 model Booking {
@@ -73,7 +95,7 @@ model Booking {
   concert_id    Int
   concert       Concert       @relation(fields: [concert_id], references: [concert_id])
   total_price   Float
-  status        String        @default("pending") // pending, success, expired
+  status        BookingStatus @default(PENDING)
   created_at    DateTime      @default(now())
   booking_items BookingItem[]
   payments      Payment[]
@@ -86,30 +108,33 @@ model BookingItem {
   booking         Booking @relation(fields: [booking_id], references: [booking_id])
   seat_id         Int
   seat            Seat    @relation(fields: [seat_id], references: [seat_id])
+
+  // ป้องกันไม่ให้ที่นั่งตัวเดิมถูกผูกกับการจองใบเดิมซ้ำ (Data Integrity)
+  @@unique([booking_id, seat_id])
 }
 
 model Payment {
-  payment_id     Int      @id @default(autoincrement())
+  payment_id     Int           @id @default(autoincrement())
   user_id        String
-  user           User     @relation(fields: [user_id], references: [user_id])
+  user           User          @relation(fields: [user_id], references: [user_id])
   booking_id     Int
-  booking        Booking  @relation(fields: [booking_id], references: [booking_id])
+  booking        Booking       @relation(fields: [booking_id], references: [booking_id])
   amount         Float
   payment_method String
-  transaction_id String?  @unique
-  paid_at        DateTime
-  status         String   @default("pending") // success, pending, fail
-  receipts      Receipt[]
+  transaction_id String?       @unique
+  paid_at        DateTime? // เปลี่ยนเป็น Optional เพราะถ้า Pending จะยังไม่มีเวลาจ่าย
+  status         PaymentStatus @default(PENDING)
+  receipts       Receipt[]
 }
 
 model Invoice {
-  invoice_id     Int      @id @default(autoincrement())
+  invoice_id     Int           @id @default(autoincrement())
   booking_id     Int
-  booking        Booking  @relation(fields: [booking_id], references: [booking_id])
-  invoice_number String   @unique
+  booking        Booking       @relation(fields: [booking_id], references: [booking_id])
+  invoice_number String        @unique
   due_date       DateTime
-  status         String   @default("unpaid") // unpaid, paid, cancelled
-  created_at     DateTime @default(now())
+  status         InvoiceStatus @default(UNPAID)
+  created_at     DateTime      @default(now())
 }
 
 model Receipt {
