@@ -8,4 +8,5 @@ router.get('/all',getAllConcert);
 router.get('/:id', verifyToken ,getConcertById);
 router.post('/create',verifyToken,isAdmin,createConcert);
 router.put('/update/:id',verifyToken,isAdmin,updateConcert);
+
 export default router;

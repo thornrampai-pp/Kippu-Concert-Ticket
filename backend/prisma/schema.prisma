@@ -80,7 +80,7 @@ model Zone {
   price       Decimal @db.Decimal(10, 2)
   total_seats Int
   concert_id  Int
-  concert     Concert @relation(fields: [concert_id], references: [concert_id])
+  concert     Concert @relation(fields: [concert_id], references: [concert_id],onDelete: Cascade)
   seats       Seat[]
 }
 
@@ -88,8 +88,8 @@ model Seat {
   seat_id        Int           @id @default(autoincrement())
   zone_id        Int
   showtime_id    Int
-  showtime       Showtime      @relation(fields: [showtime_id], references: [showtime_id])
-  zone           Zone          @relation(fields: [zone_id], references: [zone_id])
+  showtime       Showtime      @relation(fields: [showtime_id], references: [showtime_id],onDelete: Cascade)
+  zone           Zone          @relation(fields: [zone_id], references: [zone_id],onDelete: Cascade)
   seat_number    String
   status         SeatStatus    @default(AVAILABLE)
   reserved_until DateTime?

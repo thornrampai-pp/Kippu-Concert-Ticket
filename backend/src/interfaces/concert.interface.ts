@@ -1,4 +1,3 @@
-import { Request, Response } from "express";
 import { PrismaClient, SeatStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -41,3 +40,17 @@ export interface UpdateConcertBody {
 }
 
 export type UpdateParams = { id: string };
+
+
+export interface UpdateZoneDetailBody{
+  zoneName?: string;
+  price?: number;
+}
+
+export interface UpdateZoneSeatDetial{
+  zoneName?: string;
+  price?: number;
+  rowCount?: number;
+  seatPerRow?: number;
+
+}
