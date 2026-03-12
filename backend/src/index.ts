@@ -3,6 +3,7 @@ import { ENV } from "./config/env";
 import userRouter from "./routes/userRoutes"; 
 import concertRouter from "./routes/concertRoutes";
 import zoneRouter from "./routes/zoneRoutes";
+import bookingRouter from "./routes/bookingRoutes"
 import cors from 'cors'
 
 
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
 app.use("/users", userRouter);
 app.use("/concert", concertRouter)
 app.use("/zone", zoneRouter)
+app.use("/booking", bookingRouter)
 
 
 
