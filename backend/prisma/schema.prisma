@@ -97,6 +97,8 @@ model Seat {
 
   // ป้องกันเลขที่นั่งซ้ำกันในโซนเดียวกัน
   @@unique([zone_id, seat_number,showtime_id])
+  @@index([showtime_id])
+
 }
 
 model Booking {

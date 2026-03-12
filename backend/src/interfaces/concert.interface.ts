@@ -1,6 +1,5 @@
-import { PrismaClient, SeatStatus } from "@prisma/client";
+import { SeatStatus } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
 //  Zone from fronend
 export interface ZoneInput {

@@ -190,7 +190,7 @@ export const addZone = async (req: Request<UpdateParams, {}, ZoneInput>, res: Re
 
 // GET
 
-export const getZonesByConcert = async (req: Request, res: Response) => {
+export const getZonesByConcert = async (req: Request<UpdateParams,{},{}>, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -205,8 +205,8 @@ export const getZonesByConcert = async (req: Request, res: Response) => {
   }
 };
 
-export const getZoneLayout = async (req: Request, res: Response) => {
-  const { zone_id } = req.params;
+export const getZoneLayout = async (req: Request<UpdateParams, {}, {}>, res: Response) => {
+  const { id:zone_id } = req.params;
   
   const { showtime_id } = req.query; 
 

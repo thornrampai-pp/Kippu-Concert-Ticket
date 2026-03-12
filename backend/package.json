@@ -22,6 +22,8 @@
     "express": "^5.2.1",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
+    "node-cron": "^4.2.1",
+    "omise": "^1.1.0",
     "pg": "^8.20.0"
   },
   "devDependencies": {
