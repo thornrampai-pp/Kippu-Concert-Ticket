@@ -181,3 +181,92 @@ export const omiseWebhookHandler = async (req: Request, res: Response) => {
     res.status(500).send("Internal Server Error");
   }
 };
+
+
+export const getPaymentStatus = async (req: Request,res:Response) =>{
+  const { bookingId } = req.params;
+  const userId = req.user?.uid;
+
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+  try{
+    const booking = await prisma.booking.findUnique({
+      where:{
+        booking_id: Number(bookingId),
+        user_id: userId 
+      },
+      select:{
+        status: true,
+        payments:{
+          orderBy: {payment_id: 'desc'},
+          take:1,
+          select:{
+            status: true,
+            transaction_id: true
+          }
+        }
+      }
+      
+    });
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "ไม่พบข้อมูลการจอง" });
+    }
+
+    // ส่งสถานะกลับไปให้ Frontend ตัดสินใจว่าต้องทำอย่างไรต่อ
+    res.status(200).json({
+      success: true,
+      data: booking
+    
+    });
+  }catch(e){
+    console.log(e);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+
+export const getReceipt = async (req: Request, res: Response) => {
+  const { paymentId } = req.params;
+  const userId = req.user?.uid;
+
+
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: {
+        payment_id: Number(paymentId),
+        user_id: userId,
+        status: PaymentStatus.SUCCESS // ต้องจ่ายสำเร็จแล้วเท่านั้นถึงจะมีใบเสร็จ
+      },
+      include: {
+        booking: {
+          include: {
+            concert: true,
+            booking_items: {
+              include: {
+                seat: {
+                  include: { zone: true }
+                }
+              }
+            }
+          }
+        },
+        user: true
+      }
+    });
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "ไม่พบใบเสร็จที่ต้องการ" });
+    }
+
+    
+    return res.status(200).json({
+      success: true,
+      data: payment
+    });
+
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: "ไม่สามารถดึงข้อมูลใบเสร็จได้" });
+  }
+};
