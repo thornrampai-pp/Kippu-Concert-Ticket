@@ -124,36 +124,58 @@ export const omiseWebhookHandler = async (req: Request, res: Response) => {
   const { data, key } = req.body;
 
   try {
-    if (key === "charge.complete") {
+
+    if (key === "charge.complete") { // check is compleate payment
+
       const charge = data;
 
-      if (charge.status === "successful") {
-        const bookingId = charge.metadata?.bookingId || charge.description.split("ID: ")[1];
+      if (charge.status !== "successful") { // if fail รอ corn จัดการ status ต่อ
+        return res.status(200).json({ success: true });
+      } 
 
-      
-        const bookingData = await prisma.booking.findFirst({
-          where: {
-            booking_id: Number(bookingId),
-            status: BookingStatus.PENDING, // ต้องยังไม่สำเร็จ
-          },
-          include: {
-            booking_items: true,
-            invoices: true,
-          },
-        });
+      const bookingId = charge.metadata?.bookingId;
 
-        if (bookingData) {
-          // เปลี่ยนสถานะ Seat, Booking, Invoice, Payment
-          await prisma.$transaction(async (tx) => {
-            await finalizeSuccessfulPayment(tx, bookingData, charge, bookingData.user_id);
-          });
-          console.log(`[Webhook] Payment successful for Booking: ${bookingId}`);
-        }
+      if (!bookingId) {
+        console.error("Webhook missing bookingId metadata");
+        return res.status(200).json({ success: true });
       }
+
+      // กัน webhook ยิงซ้ำ
+      const existingPayment = await prisma.payment.findFirst({
+        where: {
+          transaction_id: charge.id,
+          status: PaymentStatus.SUCCESS
+        }
+      });
+
+      if (existingPayment) {
+        return res.status(200).json({ success: true });
+      }
+
+      const bookingData = await prisma.booking.findUnique({
+        where: {
+          booking_id: Number(bookingId),
+          status: BookingStatus.PENDING
+        },
+        include: {
+          booking_items: true,
+          invoices: true
+        }
+      });
+
+      if (!bookingData) {
+        return res.status(200).json({ success: true });
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await finalizeSuccessfulPayment(tx, bookingData, charge, bookingData.user_id);
+      });
+
+      console.log(`[Webhook] Payment successful for Booking: ${bookingId}`);
     }
 
-    // 4. ส่ง กลับไปให้ Omise เสมอ (ไม่งั้น Omise จะยิงซ้ำมาเรื่อยๆ)
     res.status(200).json({ success: true });
+
   } catch (e) {
     console.error("[Webhook Error]:", e);
     res.status(500).send("Internal Server Error");

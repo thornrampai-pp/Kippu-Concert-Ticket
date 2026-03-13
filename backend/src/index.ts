@@ -5,6 +5,7 @@ import concertRouter from "./routes/concertRoutes";
 import zoneRouter from "./routes/zoneRoutes";
 import bookingRouter from "./routes/bookingRoutes"
 import paymentRouter from './routes/paymentRoutes'
+import webHookRouter from './routes/webhookRoutes'
 import cors from 'cors'
 import './job/expireBooking'
 
@@ -19,10 +20,11 @@ app.get("/", (req, res) => {
 });
 
 app.use("/users", userRouter);
-app.use("/concert", concertRouter)
-app.use("/zone", zoneRouter)
-app.use("/booking", bookingRouter)
-app.use('/payment', paymentRouter)
+app.use("/concert", concertRouter);
+app.use("/zone", zoneRouter);
+app.use("/booking", bookingRouter);
+app.use('/payment', paymentRouter);
+app.use('/webhook', webHookRouter);
 
 
 
