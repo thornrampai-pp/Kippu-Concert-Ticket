@@ -1,5 +1,5 @@
 import { Request, Response,NextFunction } from "express";
-import admin from "../lib/firebaseAdmin";
+import {auth} from "../lib/firebaseAdmin";
 import prisma from "../lib/prisma";
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) =>{
   const token = req.headers.authorization?.split(' ')[1];
@@ -10,7 +10,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
   });
 
   try{
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     req.user = decodedToken; // เก็บข้อมูลไว้ใน req เพื่อใช้ใน Controller ถัดไป
     next();
 

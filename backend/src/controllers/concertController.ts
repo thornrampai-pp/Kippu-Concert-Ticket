@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { CreateConcertBody, SeatCreateInput, UpdateConcertBody, UpdateParams} from "../interfaces/concert.interface";
 import { SeatStatus } from "@prisma/client";
+import { runInNewContext } from "node:vm";
 
 
 // GET
@@ -77,6 +78,14 @@ export const getConcertById = async (req: Request<UpdateParams,{},UpdateConcertB
         },
         // ดึง zones ออกมาด้วยเพื่อคำนวณราคาเริ่มต้น (หรือแสดงรายการโซน)
         zones: {
+          select: {
+            zone_id: true,
+            zone_name: true,
+            price: true,
+            total_seats: true,
+            row_count: true,
+            seat_per_row: true,
+          },
           orderBy: {
             price: "asc",
           },
@@ -105,7 +114,7 @@ export const getConcertById = async (req: Request<UpdateParams,{},UpdateConcertB
         show_time_id: st.showtime_id,
         show_date: st.show_date,
       })),
-
+      zones: concert.zones 
     };
 
     return res.status(200).json({
@@ -166,7 +175,9 @@ export const createConcert = async (
             create: zones.map((z) => ({
               zone_name: z.zoneName,          // Map: zoneName -> zone_name
               price: z.price,
-              total_seats: z.totalSeats       // Map: totalSeats -> total_seats
+              total_seats: z.totalSeats,      // Map: totalSeats -> total_seats
+              row_count: z.rowCount,      
+              seat_per_row: z.seatPerRow  
             }))
           }
         },
@@ -195,7 +206,9 @@ export const createConcert = async (
                 zoneId: createdZone.zone_id,
                 showtimeId: show.showtime_id,
                 seatNumber: `${rowLabel}${s}`,
-                status: SeatStatus.AVAILABLE
+                rowLabel: rowLabel,
+                columnNum: s,
+                status: SeatStatus.AVAILABLE,
               });
             }
           }
@@ -206,6 +219,8 @@ export const createConcert = async (
               zone_id: s.zoneId,
               showtime_id: s.showtimeId,
               seat_number: s.seatNumber,
+              row_label: s.rowLabel,   
+              column_num: s.columnNum,
               status: s.status
             }))
           });

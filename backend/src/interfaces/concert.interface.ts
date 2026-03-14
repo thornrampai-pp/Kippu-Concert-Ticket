@@ -8,6 +8,7 @@ export interface ZoneInput {
   totalSeats: number;
   rowCount: number;
   seatPerRow: number;
+  concertId? : number;
 }
 
 //  Request Body 
@@ -27,6 +28,8 @@ export interface SeatCreateInput {
   showtimeId: number;
   seatNumber: string;
   status: SeatStatus;
+  rowLabel: string;
+  columnNum: number;
 }
 
 export interface UpdateConcertBody {

@@ -78,6 +78,8 @@ model Zone {
   zone_id     Int     @id @default(autoincrement())
   zone_name   String
   price       Decimal @db.Decimal(10, 2)
+  row_count    Int     @default(0) // จำนวนแถวทั้งหมดในโซนนี้
+  seat_per_row Int     @default(0) // จำนวนที่นั่งต่อ 1 แถว
   total_seats Int
   concert_id  Int
   concert     Concert @relation(fields: [concert_id], references: [concert_id],onDelete: Cascade)
@@ -91,13 +93,15 @@ model Seat {
   showtime       Showtime      @relation(fields: [showtime_id], references: [showtime_id],onDelete: Cascade)
   zone           Zone          @relation(fields: [zone_id], references: [zone_id],onDelete: Cascade)
   seat_number    String
+  row_label      String        // ✅ เช่น "A" (เอาไว้จัดกลุ่ม/แบ่งแถว)
+  column_num     Int           // ✅ เช่น 1 (เอาไว้เรียงลำดับซ้ายไปขวาในแถวนั้น)
   status         SeatStatus    @default(AVAILABLE)
   reserved_until DateTime?
   booking_items  BookingItem[]
 
   // ป้องกันเลขที่นั่งซ้ำกันในโซนเดียวกัน
   @@unique([zone_id, seat_number,showtime_id])
-  @@index([showtime_id])
+  @@index([showtime_id, zone_id, row_label, column_num])
 
 }
 

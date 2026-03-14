@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma  from "../lib/prisma";
-import admin from '../lib/firebaseAdmin'
+import { auth } from '../lib/firebaseAdmin'
 import { LoginGoogleBody } from "../interfaces/auth.interface";
 
 
@@ -8,7 +8,7 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
   const { idToken } = req.body;
 
   try {
-    const decodeToken = await admin.auth().verifyIdToken(idToken);
+    const decodeToken = await auth.verifyIdToken(idToken);
 
     const { uid, email, name, picture } = decodeToken;
 
@@ -26,14 +26,19 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
         role_id: 1
       }
     });
-
+    res.cookie("token", idToken, {
+      httpOnly: true,     // ป้องกันไม่ให้ JavaScript (Frontend) อ่านไฟล์นี้ได้
+      secure: process.env.NODE_ENV === "production", // ใช้เฉพาะ HTTPS ในโปรดักชัน
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 วัน
+    });
     return res.status(200).json({
-      messsage: "Login successflut",
+      messsage: "Login successful",
       data: user
     });
   } catch (e) {
-    console.log(e)
-    return res.status(401).json({ success: true, message: "Invalid token or server error" });
+    console.error("Verify token error:", e);
+    return res.status(401).json({ success: false, message: "Invalid token or server error" });
   }
 }
 

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma";
-import admin from '../lib/firebaseAdmin'
 import { UpdateParams, UpdateZoneDetailBody, UpdateZoneSeatDetial, ZoneInput } from "../interfaces/concert.interface";
 import { SeatStatus } from "@prisma/client";
 
@@ -79,6 +78,8 @@ export const updateZoneSeat = async (req: Request<UpdateParams, {}, UpdateZoneSe
                 zone_id: Number(zoneId),
                 showtime_id: show.showtime_id,
                 seat_number: `${rowLabel}${s}`,
+                row_label: rowLabel,
+                column_num: s,
                 status: SeatStatus.AVAILABLE
               });
             }
@@ -98,6 +99,8 @@ export const updateZoneSeat = async (req: Request<UpdateParams, {}, UpdateZoneSe
         data: {
           ...(zoneName && { zone_name: zoneName }),
           ...(price && { price: price }),
+          ...(rowCount && { row_count: rowCount }),
+          ...(seatPerRow && { seat_per_row: seatPerRow }),
           ...(rowCount && seatPerRow && { total_seats: rowCount * seatPerRow })
         }
 
@@ -139,43 +142,47 @@ export const addZone = async (req: Request<UpdateParams, {}, ZoneInput>, res: Re
 
 
       if (new Date(concert.sale_start_time) <= new Date()) {
-       return res.status(400).json({
+        return res.status(400).json({
           success: false,
           message: "Can not add zone now"
         });
       }
-       
-        
 
-        const newZone = await tx.zone.create({
-          data: {
-            zone_name: zoneName,
-            price: price,
-            total_seats: rowCount * seatPerRow,
-            concert_id: Number(concertId)
-          }
-        });
 
-        const newSeats = [];
-        for (const show of concert.show_times) {
-          for (let r = 1; r <= rowCount; r++) {
-            const rowLabel = String.fromCharCode(64 + r); // A, B, C...
-            for (let s = 1; s <= seatPerRow; s++) {
-              newSeats.push({
-                zone_id: newZone.zone_id,
-                showtime_id: show.showtime_id,
-                seat_number: `${rowLabel}${s}`,
-                status: "AVAILABLE" as any
-              });
-            }
+
+      const newZone = await tx.zone.create({
+        data: {
+          zone_name: zoneName,
+          price: price,
+          row_count: rowCount,
+          seat_per_row: seatPerRow,
+          total_seats: rowCount * seatPerRow,
+          concert_id: Number(concertId)
+        }
+      });
+
+      const newSeats = [];
+      for (const show of concert.show_times) {
+        for (let r = 1; r <= rowCount; r++) {
+          const rowLabel = String.fromCharCode(64 + r); // A, B, C...
+          for (let s = 1; s <= seatPerRow; s++) {
+            newSeats.push({
+              zone_id: newZone.zone_id,
+              showtime_id: show.showtime_id,
+              seat_number: `${rowLabel}${s}`,
+              row_label: rowLabel,
+              column_num: s,
+              status: SeatStatus.AVAILABLE
+            });
           }
         }
-        await tx.seat.createMany({
-          data: newSeats
-        });
-
-        return newZone;
       }
+      await tx.seat.createMany({
+        data: newSeats
+      });
+
+      return newZone;
+    }
     );
     res.status(201).json({
       success: true,
@@ -190,7 +197,7 @@ export const addZone = async (req: Request<UpdateParams, {}, ZoneInput>, res: Re
 
 // GET
 
-export const getZonesByConcert = async (req: Request<UpdateParams,{},{}>, res: Response) => {
+export const getZonesByConcert = async (req: Request<UpdateParams, {}, {}>, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -206,9 +213,9 @@ export const getZonesByConcert = async (req: Request<UpdateParams,{},{}>, res: R
 };
 
 export const getZoneLayout = async (req: Request<UpdateParams, {}, {}>, res: Response) => {
-  const { id:zone_id } = req.params;
-  
-  const { showtime_id } = req.query; 
+  const { id: zone_id } = req.params;
+
+  const { showtime_id } = req.query;
 
   try {
     const zone = await prisma.zone.findUnique({
@@ -218,7 +225,9 @@ export const getZoneLayout = async (req: Request<UpdateParams, {}, {}>, res: Res
           where: {
             showtime_id: Number(showtime_id)
           },
-          orderBy: { seat_number: 'asc' } // เรียงตามเลขที่นั่ง A1, A2...
+          orderBy: [
+            { row_label: 'asc' },
+          { column_num: 'asc' }, { seat_number: 'asc' }]// เรียงตามเลขที่นั่ง A1, A2...
         }
       }
     });
