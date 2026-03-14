@@ -266,7 +266,7 @@ export const updateConcert = async (req: Request, res: Response) => {
         ...(location && { location: location }),
         ...(isVisible !== undefined && { is_visible: isVisible }),
         ...(saleStartTime && { sale_start_time: new Date(saleStartTime) }),
-        ...(maxTicketsPerUser && { max_tickets_per_user: maxTicketsPerUser })
+        ...(maxTicketsPerUser !== undefined && { max_tickets_per_user: maxTicketsPerUser })
 
       }
     });
