@@ -5,10 +5,12 @@ import { auth } from "../lib/firebase";
 import { authService } from "../services/authService";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { User } from "../types";
 
 export const useAuth = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   const loginGoogle = async () => {
     setIsLoading(true);
@@ -19,8 +21,14 @@ export const useAuth = () => {
 
       // เรียกใช้ Service ที่เราสร้างไว้ข้างบน
       await authService.loginWithGoogle(idToken);
+      const userData = await authService.getProfile();
+      setUser(userData);
 
-      router.push("/");
+      if (userData.role.role_id === 2){
+        router.push("/admin");
+      }else{
+        router.push("/");
+      }
     } catch (err) {
       console.error("Login Error:", err);
       alert("Login failed, please try again.");
@@ -29,5 +37,5 @@ export const useAuth = () => {
     }
   };
 
-  return { loginGoogle, isLoading };
+  return { loginGoogle, isLoading, user };
 };

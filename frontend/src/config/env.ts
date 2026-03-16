@@ -10,7 +10,7 @@ export const ENV = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   },
   SUPABASE:{
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   }
 };

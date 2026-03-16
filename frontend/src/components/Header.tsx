@@ -1,8 +1,18 @@
-import React from 'react'
+"use client";
+
 import { FaCircleUser, FaTicketSimple } from "react-icons/fa6";
 import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "../hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 function Header() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth(); 
+
+  if (isLoading)
+    return <div className="p-4 bg-zinc-900 flex justify-center items-center text-white">Loading...</div>;
+  // ป้องกันการแสดงผลผิดพลาดขณะกำลังโหลดข้อมูล
   return (
     <div className="flex w-full h-15 justify-between items-center bg-zinc-400 px-5 py-4">
       <div className="flex items-center">
@@ -12,10 +22,18 @@ function Header() {
         </p>
       </div>
       <div className="flex items-center gap-4">
-        <p>Home</p>
-        <p>Booking</p>
+        <Link href="/admin">Home</Link>
+        <Link href="/booking">Booking</Link>
+        {user?.role.role_id === 2 && (
+          <button
+            onClick={() => router.push("/admin/dashboard")}
+            className="cursor-pointer bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium"
+          >
+            Admin Panel
+          </button>
+        )}
         <div className="cursor-pointer">
-          <FaCircleUser size={40}  />
+          <FaCircleUser size={40} />
           {/* <Image
             src="/profile.jpg"
             alt="profile"
@@ -30,4 +48,4 @@ function Header() {
   );
 }
 
-export default Header
+export default Header;

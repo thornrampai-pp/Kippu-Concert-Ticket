@@ -1,4 +1,5 @@
 import axiosInstance from '../lib/axios'; 
+import { ApiResponseUser, UpdateProfileInput, User } from '../types';
 
 export const authService = {
   // รับ idToken จาก Firebase แล้วส่งไปให้ Backend Port 4000
@@ -11,5 +12,22 @@ export const authService = {
   logout: async () => {
     const response = await axiosInstance.post('/users/logout');
     return response.data;
-  }
+  },
+
+  getProfile: async (): Promise<User> => {
+    const response = await axiosInstance.get<ApiResponseUser<User>>(
+      "/users/me"
+    );
+    return response.data.data;
+  },
+
+  updateProfile: async (
+    data: UpdateProfileInput
+  ): Promise<User> => {
+    const response = await axiosInstance.patch<ApiResponseUser<User>>(
+      "/users/me",
+      data
+    );
+    return response.data.data;
+  },
 };

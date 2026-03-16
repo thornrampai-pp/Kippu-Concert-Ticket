@@ -3,7 +3,7 @@ import { Concert, CreateConcertInput, ApiResponse } from "../types";
 
 export const concertService = {
   getAllConcerts: async (): Promise<Concert[]> => {
-    const response = await axiosInstance.get<ApiResponse<Concert[]>>("/concert/all");
+    const response = await axiosInstance.get<ApiResponse<Concert[]>>("/concert/all",);
     return response.data.data;
   },
 

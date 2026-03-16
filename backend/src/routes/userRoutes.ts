@@ -7,8 +7,8 @@ const router = Router();
 
 router.post("/signin", loginGoogle);
 router.post("/logout", logoutGoogle);
-router.get('/profile',verifyToken,getUser);
-router.patch('/update',verifyToken,updateProfile);
+router.get('/me',verifyToken,getUser);
+router.patch('/me',verifyToken,updateProfile);
 
 
 export default router;
