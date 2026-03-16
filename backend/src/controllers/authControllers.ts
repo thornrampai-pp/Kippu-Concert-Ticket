@@ -27,10 +27,9 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
       }
     });
     res.cookie("token", idToken, {
-      httpOnly: true,     // ป้องกันไม่ให้ JavaScript (Frontend) อ่านไฟล์นี้ได้
-      secure: process.env.NODE_ENV === "production", // ใช้เฉพาะ HTTPS ในโปรดักชัน
+      httpOnly: true,
+      secure: false, // true ถ้า https
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 วัน
     });
     return res.status(200).json({
       messsage: "Login successful",

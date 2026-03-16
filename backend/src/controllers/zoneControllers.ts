@@ -34,7 +34,7 @@ export const updateZoneDetail = async (req: Request<UpdateParams, {}, UpdateZone
 export const updateZoneSeat = async (req: Request<UpdateParams, {}, UpdateZoneSeatDetial>, res: Response) => {
   const { id: zoneId } = req.params;
 
-  const { rowCount, seatPerRow, zoneName, price } = req.body;
+  const { rowCount, seatPerRow, zoneName, price,posX,posY,width,height ,color} = req.body;
 
   try {
     const zone = await prisma.$transaction(async (tx) => {
@@ -98,10 +98,15 @@ export const updateZoneSeat = async (req: Request<UpdateParams, {}, UpdateZoneSe
         },
         data: {
           ...(zoneName && { zone_name: zoneName }),
-          ...(price && { price: price }),
+          ...(price !== undefined && { price }),
           ...(rowCount && { row_count: rowCount }),
           ...(seatPerRow && { seat_per_row: seatPerRow }),
-          ...(rowCount && seatPerRow && { total_seats: rowCount * seatPerRow })
+          ...(rowCount && seatPerRow && { total_seats: rowCount * seatPerRow }),
+          ...(color && {color:color}),
+          ...(posX !== undefined && { pos_x: posX }),
+          ...(posY !== undefined && { pos_y: posY}),
+          ...(width !== undefined && { width: width }),
+          ...(height !== undefined && { height: height })
         }
 
       })
@@ -122,7 +127,7 @@ export const updateZoneSeat = async (req: Request<UpdateParams, {}, UpdateZoneSe
 
 export const addZone = async (req: Request<UpdateParams, {}, ZoneInput>, res: Response) => {
   const { id: concertId } = req.params;
-  const { zoneName, price, rowCount, seatPerRow } = req.body;
+  const { zone_name, price, row_count, seat_per_row, pos_x, pos_y, width, height, color } = req.body;
 
 
   try {
@@ -152,20 +157,26 @@ export const addZone = async (req: Request<UpdateParams, {}, ZoneInput>, res: Re
 
       const newZone = await tx.zone.create({
         data: {
-          zone_name: zoneName,
+          zone_name: zone_name,
           price: price,
-          row_count: rowCount,
-          seat_per_row: seatPerRow,
-          total_seats: rowCount * seatPerRow,
-          concert_id: Number(concertId)
+          row_count: row_count,
+          seat_per_row: seat_per_row,
+          total_seats: row_count * seat_per_row,
+          concert_id: Number(concertId),
+          color: color , 
+        
+          pos_x: pos_x ?? 0,
+          pos_y: pos_y ?? 0,
+          width: width ?? 120,
+          height: height ?? 80
         }
       });
 
       const newSeats = [];
       for (const show of concert.show_times) {
-        for (let r = 1; r <= rowCount; r++) {
+        for (let r = 1; r <= row_count; r++) {
           const rowLabel = String.fromCharCode(64 + r); // A, B, C...
-          for (let s = 1; s <= seatPerRow; s++) {
+          for (let s = 1; s <= seat_per_row; s++) {
             newSeats.push({
               zone_id: newZone.zone_id,
               showtime_id: show.showtime_id,

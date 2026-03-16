@@ -7,13 +7,14 @@ import bookingRouter from "./routes/bookingRoutes"
 import paymentRouter from './routes/paymentRoutes'
 import webHookRouter from './routes/webhookRoutes'
 import cors from 'cors'
+import cookieParser from "cookie-parser";
 import './job/expireBooking'
 
 const app = express();
 
 app.use(cors({ origin: ENV.FRONTEND_URL, credentials: true }));
 app.use(express.json());
-
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.json({ message : "Kippu API is running" });

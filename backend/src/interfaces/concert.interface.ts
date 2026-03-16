@@ -3,33 +3,41 @@ import { SeatStatus } from "@prisma/client";
 
 //  Zone from fronend
 export interface ZoneInput {
-  zoneName: string;
+  zone_name: string;
   price: number;
-  totalSeats: number;
-  rowCount: number;
-  seatPerRow: number;
+  total_seats: number;
+  row_count: number;
+  seat_per_row: number;
   concertId? : number;
+
+  color: string;
+
+  pos_x?: number;
+  pos_y?: number;
+  width?: number;
+  height?: number;
 }
 
 //  Request Body 
 export interface CreateConcertBody {
-  concertName: string;
-  concertDetail?: string;
+  concert_name: string;
+  concert_detail?: string;
   location: string;
-  isVisible?: boolean;
-  showTimes: string[];
-  saleStartTime: string;
-  maxTicketsPerUser?: number;
+  is_visible?: boolean;
+  show_times: string[];
+  sale_start_time: string;
+  max_tickets_per_user?: number;
+
   zones: ZoneInput[];
 }
 
 export interface SeatCreateInput {
-  zoneId: number;
-  showtimeId: number;
-  seatNumber: string;
+  zone_id: number;
+  showtime_id: number;
+  seat_number: string;
   status: SeatStatus;
-  rowLabel: string;
-  columnNum: number;
+  row_label: string;
+  column_num: number;
 }
 
 export interface UpdateConcertBody {
@@ -54,5 +62,12 @@ export interface UpdateZoneSeatDetial{
   price?: number;
   rowCount?: number;
   seatPerRow?: number;
+
+  color: string;
+
+  posX?: number;
+  posY?: number;
+  width?: number;
+  height?: number;
 
 }

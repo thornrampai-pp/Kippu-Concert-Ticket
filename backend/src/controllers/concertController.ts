@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma";
-import { CreateConcertBody, SeatCreateInput, UpdateConcertBody, UpdateParams} from "../interfaces/concert.interface";
+import { CreateConcertBody, SeatCreateInput, UpdateConcertBody, UpdateParams } from "../interfaces/concert.interface";
 import { SeatStatus } from "@prisma/client";
 import { runInNewContext } from "node:vm";
 
@@ -62,7 +62,7 @@ export const getAllConcert = async (req: Request, res: Response) => {
 };
 
 
-export const getConcertById = async (req: Request<UpdateParams,{},UpdateConcertBody>, res: Response) => {
+export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcertBody>, res: Response) => {
   const { id } = req.params;
   try {
     const concert = await prisma.concert.findUnique({
@@ -85,6 +85,11 @@ export const getConcertById = async (req: Request<UpdateParams,{},UpdateConcertB
             total_seats: true,
             row_count: true,
             seat_per_row: true,
+            color: true,
+            pos_x:true,
+            pos_y:true,
+            width:true,
+            height:true,
           },
           orderBy: {
             price: "asc",
@@ -114,7 +119,7 @@ export const getConcertById = async (req: Request<UpdateParams,{},UpdateConcertB
         show_time_id: st.showtime_id,
         show_date: st.show_date,
       })),
-      zones: concert.zones 
+      zones: concert.zones
     };
 
     return res.status(200).json({
@@ -134,19 +139,20 @@ export const getConcertById = async (req: Request<UpdateParams,{},UpdateConcertB
 
 
 // CREATE
+
 export const createConcert = async (
   req: Request<{}, {}, CreateConcertBody>,
   res: Response
 ) => {
   // 
   const {
-    concertName,
-    concertDetail,
+    concert_name,    
+    concert_detail,  
     location,
-    isVisible,
-    showTimes,
-    saleStartTime,
-    maxTicketsPerUser,
+    is_visible,     
+    show_times,     
+    sale_start_time,
+    max_tickets_per_user, 
     zones
   } = req.body;
 
@@ -156,16 +162,16 @@ export const createConcert = async (
       // 2. Mapping เข้า Prisma (ฝั่งซ้ายคือชื่อใน DB, ฝั่งขวาคือค่าจากตัวแปร)
       const newConcert = await tx.concert.create({
         data: {
-          concert_name: concertName,          // Map: concertName -> concert_name
-          concert_detail: concertDetail || '',      // Map: concertDetail -> concert_detail
+          concert_name: concert_name,          // Map: concertName -> concert_name
+          concert_detail: concert_detail || '',      // Map: concertDetail -> concert_detail
           location: location,
-          is_visible: isVisible ?? true,      // Map: isVisible -> is_visible
-          sale_start_time: new Date(saleStartTime),
-          max_tickets_per_user: maxTicketsPerUser ?? 2,
+          is_visible: is_visible ?? true,      // Map: isVisible -> is_visible
+          sale_start_time: new Date(sale_start_time),
+          max_tickets_per_user: max_tickets_per_user ?? 2,
 
           // สร้าง Showtimes หลายรอบ
           show_times: {
-            create: showTimes.map(date => ({
+            create: show_times.map(date => ({
               show_date: new Date(date)
             }))
           },
@@ -173,11 +179,16 @@ export const createConcert = async (
           // สร้าง Zones
           zones: {
             create: zones.map((z) => ({
-              zone_name: z.zoneName,          // Map: zoneName -> zone_name
+              zone_name: z.zone_name,          // Map: zoneName -> zone_name
               price: z.price,
-              total_seats: z.totalSeats,      // Map: totalSeats -> total_seats
-              row_count: z.rowCount,      
-              seat_per_row: z.seatPerRow  
+              total_seats: z.row_count * z.seat_per_row,      // Map: totalSeats -> total_seats
+              row_count: z.row_count,
+              seat_per_row: z.seat_per_row,
+              color: z.color,
+              pos_x: z.pos_x ?? 0,
+              pos_y: z.pos_y ?? 0,
+              width: z.width ?? 120,
+              height: z.height ?? 80
             }))
           }
         },
@@ -188,41 +199,48 @@ export const createConcert = async (
       });
 
       // 3. STEP 2: วนลูปสร้างที่นั่ง (Seats) แยกตามรอบและโซน
+      const zoneMap = new Map(
+        newConcert.zones.map((z) => [z.zone_name, z.zone_id])
+      );
+
       for (const show of newConcert.show_times) {
+        // สร้าง Buffer ขนาดใหญ่สำหรับเก็บที่นั่ง "ทุกโซน" ในรอบการแสดงนี้
+        const allSeatsInShow: any[] = [];
+
         for (const zoneInput of zones) {
+          const createdZoneId = zoneMap.get(zoneInput.zone_name);
+          if (!createdZoneId) continue;
 
-          const createdZone = newConcert.zones.find(
-            (z) => z.zone_name === zoneInput.zoneName
-          );
+          const getRowLabel = (n: number): string => {
+            let label = "";
+            while (n > 0) {
+              let m = (n - 1) % 26;
+              label = String.fromCharCode(65 + m) + label; // 65 คือ 'A'
+              n = Math.floor((n - m) / 26);
+            }
+            return label;
+          };
 
-          if (!createdZone) continue;
-
-          const seatsBuffer: SeatCreateInput[] = [];
-
-          for (let r = 1; r <= zoneInput.rowCount; r++) {
-            const rowLabel = String.fromCharCode(64 + r);
-            for (let s = 1; s <= zoneInput.seatPerRow; s++) {
-              seatsBuffer.push({
-                zoneId: createdZone.zone_id,
-                showtimeId: show.showtime_id,
-                seatNumber: `${rowLabel}${s}`,
-                rowLabel: rowLabel,
-                columnNum: s,
+          for (let r = 1; r <= zoneInput.row_count; r++) {
+            const rowLabel = getRowLabel(r);
+            for (let s = 1; s <= zoneInput.seat_per_row; s++) {
+              allSeatsInShow.push({
+                zone_id: createdZoneId,
+                showtime_id: show.showtime_id,
+                seat_number: `${rowLabel}${s}`,
+                row_label: rowLabel,
+                column_num: s,
                 status: SeatStatus.AVAILABLE,
               });
             }
           }
+        }
 
-          // บันทึกลงตาราง Seat โดยต้อง Map ชื่อฟิลด์ให้ตรงกับ DB
+        // ยิง Query ครั้งเดียวต่อรอบการแสดง (เช่น รอบละ 2,000 - 5,000 seats)
+        if (allSeatsInShow.length > 0) {
           await tx.seat.createMany({
-            data: seatsBuffer.map(s => ({
-              zone_id: s.zoneId,
-              showtime_id: s.showtimeId,
-              seat_number: s.seatNumber,
-              row_label: s.rowLabel,   
-              column_num: s.columnNum,
-              status: s.status
-            }))
+            data: allSeatsInShow,
+            skipDuplicates: true, // ป้องกัน Error ถ้ามีการรันซ้ำ
           });
         }
       }

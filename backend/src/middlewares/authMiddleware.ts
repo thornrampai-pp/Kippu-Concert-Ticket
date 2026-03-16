@@ -1,24 +1,36 @@
-import { Request, Response,NextFunction } from "express";
-import {auth} from "../lib/firebaseAdmin";
+import { Request, Response, NextFunction } from "express";
+import { auth } from "../lib/firebaseAdmin";
 import prisma from "../lib/prisma";
-export const verifyToken = async (req: Request, res: Response, next: NextFunction) =>{
-  const token = req.headers.authorization?.split(' ')[1];
 
-  if(!token) return res.status(401).json({
-    success: true,
-    message: "Unauthorized"
-  });
-
-  try{
-    const decodedToken = await auth.verifyIdToken(token);
-    req.user = decodedToken; // เก็บข้อมูลไว้ใน req เพื่อใช้ใน Controller ถัดไป
-    next();
-
-  }catch(e){
-    console.log(e)
+export const verifyToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.cookies.token;
+  // console.log(`back ${token}`)
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
   }
 
-}
+  try {
+    const decodedToken = await auth.verifyIdToken(token);
+
+    req.user = decodedToken;
+
+    next();
+  } catch (e) {
+    console.error(e);
+
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
+  }
+};
 
 export const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -35,7 +47,7 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
       select: { role: true }
     });
 
-    if (user?.role.role_id !== 1) {
+    if (user?.role.role_id !== 2) {
       return res.status(403).json({
         success: false,
         message: "Forbidden: Admin access required"

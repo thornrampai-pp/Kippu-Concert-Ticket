@@ -53,56 +53,62 @@ model User {
 }
 
 model Concert {
-  concert_id           Int       @id @default(autoincrement())
+  concert_id           Int        @id @default(autoincrement())
   concert_name         String
   concert_detail       String?
-  image_url            String?
+  image_url            String[]
   location             String
-  is_visible           Boolean   @default(false)
-  show_times            Showtime[] 
+  is_visible           Boolean    @default(false)
+  show_times           Showtime[]
   sale_start_time      DateTime
-  max_tickets_per_user Int       @default(2)
+  max_tickets_per_user Int        @default(2)
   zones                Zone[]
   bookings             Booking[]
 }
 
 model Showtime {
-  showtime_id   Int      @id @default(autoincrement())
-  show_date     DateTime 
-  concert_id    Int
-  concert       Concert  @relation(fields: [concert_id], references: [concert_id])
+  showtime_id Int      @id @default(autoincrement())
+  show_date   DateTime
+  concert_id  Int
+  concert     Concert  @relation(fields: [concert_id], references: [concert_id])
   seats       Seat[]
 }
 
 model Zone {
-  zone_id     Int     @id @default(autoincrement())
-  zone_name   String
-  price       Decimal @db.Decimal(10, 2)
+  zone_id      Int     @id @default(autoincrement())
+  zone_name    String
+  price        Decimal @db.Decimal(10, 2)
+  color       String
   row_count    Int     @default(0) // จำนวนแถวทั้งหมดในโซนนี้
   seat_per_row Int     @default(0) // จำนวนที่นั่งต่อ 1 แถว
-  total_seats Int
-  concert_id  Int
-  concert     Concert @relation(fields: [concert_id], references: [concert_id],onDelete: Cascade)
-  seats       Seat[]
+  total_seats  Int
+  concert_id   Int
+
+  pos_x  Int @default(0)
+  pos_y  Int @default(0)
+  width  Int @default(120)
+  height Int @default(80)
+
+  concert Concert @relation(fields: [concert_id], references: [concert_id], onDelete: Cascade)
+  seats   Seat[]
 }
 
 model Seat {
   seat_id        Int           @id @default(autoincrement())
   zone_id        Int
   showtime_id    Int
-  showtime       Showtime      @relation(fields: [showtime_id], references: [showtime_id],onDelete: Cascade)
-  zone           Zone          @relation(fields: [zone_id], references: [zone_id],onDelete: Cascade)
+  showtime       Showtime      @relation(fields: [showtime_id], references: [showtime_id], onDelete: Cascade)
+  zone           Zone          @relation(fields: [zone_id], references: [zone_id], onDelete: Cascade)
   seat_number    String
-  row_label      String        // ✅ เช่น "A" (เอาไว้จัดกลุ่ม/แบ่งแถว)
-  column_num     Int           // ✅ เช่น 1 (เอาไว้เรียงลำดับซ้ายไปขวาในแถวนั้น)
+  row_label      String // ✅ เช่น "A" (เอาไว้จัดกลุ่ม/แบ่งแถว)
+  column_num     Int // ✅ เช่น 1 (เอาไว้เรียงลำดับซ้ายไปขวาในแถวนั้น)
   status         SeatStatus    @default(AVAILABLE)
   reserved_until DateTime?
   booking_items  BookingItem[]
 
   // ป้องกันเลขที่นั่งซ้ำกันในโซนเดียวกัน
-  @@unique([zone_id, seat_number,showtime_id])
+  @@unique([zone_id, seat_number, showtime_id])
   @@index([showtime_id, zone_id, row_label, column_num])
-
 }
 
 model Booking {
