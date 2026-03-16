@@ -24,6 +24,7 @@ export interface CreateConcertBody {
   concert_detail?: string;
   location: string;
   is_visible?: boolean;
+  image_url: string[];
   show_times: string[];
   sale_start_time: string;
   max_tickets_per_user?: number;

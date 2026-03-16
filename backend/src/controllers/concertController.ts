@@ -6,6 +6,7 @@ import { runInNewContext } from "node:vm";
 
 
 // GET
+
 export const getAllConcert = async (req: Request, res: Response) => {
   try {
     const dateNow = new Date();
@@ -37,11 +38,14 @@ export const getAllConcert = async (req: Request, res: Response) => {
 
     // Mapping ข้อมูลให้เป็นระเบียบตาม Interface ที่เราตั้งไว้
     const formattedData = concertsData.map((concert) => ({
-      concert_Id: concert.concert_id,
+      concert_id: concert.concert_id,
       concert_name: concert.concert_name,
       concert_detail: concert.concert_detail,
+      image_url: concert.image_url,
       location: concert.location,
       sale_start_time: concert.sale_start_time,
+      is_visible: concert.is_visible,
+      max_tickets_per_user: concert.max_tickets_per_user,
       // แสดง List รอบเวลาทั้งหมดที่มีในฐานข้อมูล
       show_times: concert.show_times.map((st) => ({
         show_time_id: st.showtime_id,
@@ -78,18 +82,17 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
         },
         // ดึง zones ออกมาด้วยเพื่อคำนวณราคาเริ่มต้น (หรือแสดงรายการโซน)
         zones: {
-          select: {
-            zone_id: true,
-            zone_name: true,
-            price: true,
-            total_seats: true,
-            row_count: true,
-            seat_per_row: true,
-            color: true,
-            pos_x:true,
-            pos_y:true,
-            width:true,
-            height:true,
+          // ✅ ใช้ include เพื่อเอา "ทุกฟิลด์" ของ Zone (รวมถึงพิกัดที่คุณต้องการ)
+          include: {
+            _count: {
+              select: {
+                // นับจำนวน Seat ที่ถูกจองไปแล้ว (is_booked: true)
+                // ตรวจสอบชื่อฟิลด์ใน Schema ของคุณอีกครั้งนะครับ
+                seats: {
+                  where: { status: SeatStatus.AVAILABLE }
+                }
+              }
+            }
           },
           orderBy: {
             price: "asc",
@@ -110,16 +113,18 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
 
     // 3. Mapping ข้อมูลให้ชื่อ Field ตรงกับ getAllConcert
     const formattedData = {
-      concert_Id: concert.concert_id,
-      concert_name: concert.concert_name,
-      concert_detail: concert.concert_detail,
-      location: concert.location,
-      sale_start_time: concert.sale_start_time,
+      ...concert,
       show_times: concert.show_times.map((st) => ({
         show_time_id: st.showtime_id,
         show_date: st.show_date,
       })),
-      zones: concert.zones
+      zones: concert.zones.map((zone) => ({
+        ...zone,
+       
+        remaining_seats: zone._count.seats,
+       
+        _count: undefined
+      }))
     };
 
     return res.status(200).json({
@@ -149,6 +154,7 @@ export const createConcert = async (
     concert_name,    
     concert_detail,  
     location,
+    image_url,
     is_visible,     
     show_times,     
     sale_start_time,
@@ -165,6 +171,7 @@ export const createConcert = async (
           concert_name: concert_name,          // Map: concertName -> concert_name
           concert_detail: concert_detail || '',      // Map: concertDetail -> concert_detail
           location: location,
+          image_url: image_url,
           is_visible: is_visible ?? true,      // Map: isVisible -> is_visible
           sale_start_time: new Date(sale_start_time),
           max_tickets_per_user: max_tickets_per_user ?? 2,

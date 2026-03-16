@@ -48,3 +48,21 @@ export const logoutGoogle = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: "Logout failed" });
   }
 }
+
+export const refreshToken = async (req: Request, res: Response) => {
+  const { idToken } = req.body;
+  try {
+    await auth.verifyIdToken(idToken); // ตรวจสอบความถูกต้อง
+
+    res.cookie("token", idToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 1000 // 1 ชั่วโมง
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    return res.status(401).json({ success: false });
+  }
+}
