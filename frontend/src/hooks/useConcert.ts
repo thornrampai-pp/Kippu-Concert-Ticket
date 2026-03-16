@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState ,} from "react";
 import { Concert, CreateConcertInput, ImageFile } from "../types";
 import { concertService } from "../services/concertService";
 import { createClient } from "@supabase/supabase-js";
@@ -10,27 +10,28 @@ import { useRouter } from "next/navigation";
 
 const supabase = createClient(ENV.SUPABASE.url, ENV.SUPABASE.key);
 
-export const useConcert = () =>{
-  const [concerts,setConcert] = useState<Concert[]>([]);
+export const useConcert = () => {
+  const [concerts, setConcert] = useState<Concert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchConcerts = async () =>{
-    try{
+  const fetchConcerts = async () => {
+    try {
       setIsLoading(true);
       const data = await concertService.getAllConcerts();
       setConcert(data)
-    }catch(e){
+    } catch (e) {
       console.log(e)
       setError("Failed to fetch concerts");
-    }finally{
+    } finally {
       setIsLoading(false);
 
     }
   };
-  useEffect(() =>{
+  useEffect(() => {
     fetchConcerts();
-  },[]);
+  }, []);
+  console.log(concerts)
 
   return {
     concerts,
@@ -39,7 +40,7 @@ export const useConcert = () =>{
     fetchConcerts
   }
 
-  
+
 }
 
 export const useConcertDates = () => {
@@ -133,7 +134,7 @@ export const useCreateConcert = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
+
 
   // รับฟังก์ชัน uploadAllImages เข้ามาเป็น parameter หรือจะ import มาใช้ข้างในก็ได้
   const handleCreateConcert = async (
@@ -171,5 +172,38 @@ export const useCreateConcert = () => {
     handleCreateConcert,
     loading,
     error,
+  };
+};
+
+export const useConcertById = (id: string | undefined) => {
+  const [concert, setConcert] = useState<Concert | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchConcert = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await concertService.getConcertById(id);
+      setConcert(data);
+    } catch (err) {
+      console.error("Fetch Concert Error:", err);
+      setError("Cant get concert");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchConcert();
+  }, [fetchConcert]);
+
+  return {
+    concert,
+    isLoading,
+    error,
+    refresh: fetchConcert, // เผื่อใช้สำหรับปุ่ม Pull to refresh
   };
 };

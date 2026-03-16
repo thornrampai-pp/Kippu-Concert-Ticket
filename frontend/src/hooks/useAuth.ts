@@ -4,13 +4,42 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { authService } from "../services/authService";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "../types";
+import { useAuthContext } from "../context/authContext";
 
 export const useAuth = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+
+
+  useEffect(() => {
+    const unsubscribe = auth.onIdTokenChanged(async (firebaseUser) => {
+      setIsLoading(true);
+      if (firebaseUser) {
+        try {
+          // 1. รับ Token ล่าสุด (Firebase จัดการ Refresh ให้ถ้าใกล้หมดอายุ)
+          const idToken = await firebaseUser.getIdToken();
+
+          // 2. เรียก Service เพื่อเอา Token ใหม่ไปใส่ใน HttpOnly Cookie
+          await authService.refreshToken(idToken);
+
+          // 3. ดึง Profile เพื่ออัปเดต State (ให้ role ไม่เป็น undefined)
+          const userData = await authService.getProfile();
+          setUser(userData);
+        } catch (err) {
+          console.error("Auth sync error:", err);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const loginGoogle = async () => {
     setIsLoading(true);
@@ -38,4 +67,25 @@ export const useAuth = () => {
   };
 
   return { loginGoogle, isLoading, user };
+};
+
+export const useAdminGuard = () => {
+  const { user, isLoading } = useAuthContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    // กฎเหล็ก: ต้องโหลดเสร็จ (isLoading: false) และ มั่นใจว่าไม่ใช่ Admin จริงๆ ถึงจะไล่ออก
+    if (!isLoading) {
+      const isAdmin = user?.role?.role_id === 2;
+      if (!user || !isAdmin) {
+        router.replace("/");
+      }
+    }
+  }, [isLoading, user, router]);
+
+  return {
+    user,
+    isLoading,
+    isAdmin: user?.role?.role_id === 2
+  };
 };

@@ -24,7 +24,7 @@ const ConcertForm = ({
 }: Props) => {
   
   const { dates, addDate, removeDate, setDates } = useConcertDates();
-  const { images, handleImageChange, removeImage } = imageUploadProps;
+  const { images, handleImageChange, removeImage } = imageUploadProps
 
   useEffect(() => {
     setConcertData((prev) => ({
@@ -41,9 +41,9 @@ const ConcertForm = ({
   }, [dates, setConcertData]);
 
   return (
-    <div>
-      <div className="flex gap-8 ">
-        <div className="flex-1 p-4 space-y-3">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
+        <div className="w-full md:flex-1 space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border-2 border-dashed border-zinc-400 p-4 rounded-xl">
             {images.map((img, index) => (
               <div
@@ -206,7 +206,12 @@ const ConcertForm = ({
               type="number"
               min="1"
               className="w-full p-2 bg-gray-100 rounded-lg border-0 focus:outline-none focus:ring-2"
-              value={concertData.max_tickets_per_user}
+              value={
+                concertData.max_tickets_per_user === 0
+                  ? ""
+                  : concertData.max_tickets_per_user
+              }
+              
               onChange={(e) =>
                 setConcertData({
                   ...concertData,

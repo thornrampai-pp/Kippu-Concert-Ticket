@@ -30,4 +30,9 @@ export const authService = {
     );
     return response.data.data;
   },
+
+  refreshToken: async (idToken: string) => {
+    const response = await axiosInstance.post('/users/refresh-token', { idToken });
+    return response.data;
+  },
 };

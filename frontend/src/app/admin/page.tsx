@@ -3,48 +3,50 @@
 import Header from "@/src/components/Header";
 import { useConcert } from "../../hooks/useConcert";
 import { useRouter } from "next/navigation";
+import CardConcert from "@/src/components/CardConcert";
+import { useAdminGuard } from "@/src/hooks/useAuth";
 
+// src/app/admin/page.tsx
 export default function Page() {
+  const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const { concerts, isLoading, error } = useConcert();
   const router = useRouter();
 
-  if (isLoading) return <p className="p-6 ">Loading...</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
-
+  // ปล่อยให้ Guard จัดการเรื่อง Redirect แต่เราจะ Render โครงสร้างหลักรอไว้
   return (
     <div className="min-h-screen bg-zinc-900">
       <Header />
-
+      
       <div className="p-6 flex flex-col gap-6 ">
-        {/* top bar */}
-        <div className="flex justify-between items-center gap-4">
-          <h1 className="text-2xl font-bold text-white">Concert Management</h1>
-
-          <button className="cursor-pointer bg-white text-black px-4 py-2 rounded-lg hover:bg-white-500 transition"
-            onClick={() => router.push('/admin/create')}
-          >
-            Create Concert
-          </button>
-        </div>
-
-        {/* empty state */}
-        {concerts.length === 0 ? (
-          <p className="flex p-6 text-white justify-center items-center">
-            No concerts available
-          </p>
-        ) : (
-          <div className="grid grid-cols-3 gap-6">
-            {concerts.map((concert) => (
-              <div
-                key={concert.concert_id}
-                className="bg-gray-200 p-4 rounded-lg shadow"
+        {authLoading ? (
+          <p className="text-white text-center mt-10 animate-pulse">Checking Permission...</p>
+        ) : isAdmin ? (
+          <>
+            <div className="flex justify-between items-center gap-4">
+              <h1 className="text-2xl font-bold text-white">Concert Management</h1>
+              <button
+                className="cursor-pointer bg-white text-black px-4 py-2 rounded-lg"
+                onClick={() => router.push("/admin/create")}
               >
-                <h3 className="font-bold">{concert.concert_name}</h3>
-                <p className="text-sm text-gray-600">{concert.location}</p>
+                Create Concert
+              </button>
+            </div>
+
+            {isLoading ? (
+              <p className="p-6 text-white text-center">Loading...</p>
+            ) : error ? (
+              <p className="p-6 text-red-500">{error}</p>
+            ) : concerts.length === 0 ? (
+              <p className="text-white text-center">No concerts</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-6">
+                {concerts.map((concert) => (
+                  <CardConcert key={concert.concert_id} concert={concert} />
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );

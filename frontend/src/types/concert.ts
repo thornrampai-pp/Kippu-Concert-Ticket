@@ -39,6 +39,9 @@ export interface Zone {
   width: number;
   height: number;
 
+  remaining_seats: number;
+  booked_seats?: number;
+
   seats?: Seat[];
 }
 
@@ -46,7 +49,7 @@ export interface Seat {
   seat_id: number;
 
   zone_id: number;
-  showtime_id: number;
+  show_time_id: number;
 
   seat_number: string;
   row_label: string;

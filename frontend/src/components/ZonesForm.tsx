@@ -73,7 +73,7 @@ const ZonesForm = ({ zones, setConcertData }: Props) => {
       <div className="space-y-1">
         <p>Price</p>
         <input
-          value={zoneInput.price}
+          value={zoneInput.price === 0 ? "" : zoneInput.price}
           onChange={(e) =>
             setZoneInput({ ...zoneInput, price: Number(e.target.value) })
           }
@@ -103,7 +103,7 @@ const ZonesForm = ({ zones, setConcertData }: Props) => {
         <div className="space-y-1 flex-1">
           <p>Row Count</p>
           <input
-            value={zoneInput.row_count}
+            value={zoneInput.row_count === 0 ? "" : zoneInput.row_count}
             onChange={(e) =>
               setZoneInput({
                 ...zoneInput,
@@ -119,7 +119,8 @@ const ZonesForm = ({ zones, setConcertData }: Props) => {
         <div className="space-y-1 flex-1">
           <p>Seat Per Row</p>
           <input
-            value={zoneInput.seat_per_row}
+            value={zoneInput.seat_per_row === 0 ? "" : zoneInput.seat_per_row}
+            
             onChange={(e) =>
               setZoneInput({
                 ...zoneInput,
