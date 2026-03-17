@@ -62,21 +62,12 @@ const [selectedShowTimeId, setSelectedShowTimeId] = useState<number | null>(
         />
 
         {/* ข้อมูลคอนเสิร์ต */}
-        <div className="mb-5 flex flex-row justify-between">
-          <div>
-            <h1 className="text-white text-3xl font-bold">
-              {concert.concert_name}-{concert.is_visible ? "Sale now" : "Close"}
-            </h1>
-          </div>
-          <div>
-            <button
-              onClick={() => router.push(`/admin/concert/${concert.concert_id}`)}
-              className="bg-zinc-500 text-black px-4 py-2 rounded-lg"
-            >
-              Edit Concert
-            </button>
-          </div>
+        <div>
+          <h1 className="text-white text-3xl font-bold">
+            {concert.concert_name}-{concert.is_visible ? "Sale now" : "Close"}
+          </h1>
         </div>
+
         <div className="flex flex-col md:flex-row gap-8">
           <div className="relative w-full md:w-80 h-100 rounded-2xl overflow-hidden shadow-xl ">
             <Image

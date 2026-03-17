@@ -5,6 +5,10 @@ export const concertService = {
     const response = await axiosInstance.get<ApiResponse<Concert[]>>("/concert/all");
     return response.data.data;
   },
+  getAdminAllConcerts: async(): Promise<Concert[]> =>{
+    const response = await axiosInstance.get<ApiResponse<Concert[]>>("/concert/admin/all");
+    return response.data.data;
+  },
 
   getConcertById: async (id: string): Promise<Concert> => {
     const response = await axiosInstance.get<ApiResponse<Concert>>(`/concert/${id}`);

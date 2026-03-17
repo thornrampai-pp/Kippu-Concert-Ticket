@@ -66,6 +66,61 @@ export const getAllConcert = async (req: Request, res: Response) => {
 };
 
 
+export const getAdminConcerts = async (req: Request, res: Response) => {
+  try {
+    // Admin จะไม่ใช้ Filter is_visible หรือเช็ควันที่ (gte: dateNow)
+    // เพื่อให้เห็นคอนเสิร์ตทั้งหมดที่เคยสร้างไว้
+    const concertsData = await prisma.concert.findMany({
+      include: {
+        show_times: {
+          orderBy: {
+            show_date: "asc",
+          },
+          include: {
+            _count: {
+              select: { seats: true } // นับจำนวนที่นั่งทั้งหมดในแต่ละรอบ
+            }
+          }
+        },
+        _count: {
+          select: { zones: true } // นับจำนวนโซนที่มีในคอนเสิร์ตนี้
+        }
+      },
+      orderBy: {
+        // เรียงตามวันที่สร้างล่าสุดขึ้นก่อน (Admin มักจะอยากดูงานล่าสุด)
+        concert_id: "desc",
+      },
+    });
+
+    const formattedData = concertsData.map((concert) => ({
+      concert_id: concert.concert_id,
+      concert_name: concert.concert_name,
+      concert_detail: concert.concert_detail,
+      image_url: concert.image_url,
+      location: concert.location,
+      sale_start_time: concert.sale_start_time,
+      is_visible: concert.is_visible, // Admin จะได้เช็คได้ว่าตัวไหนเปิด/ปิดอยู่
+      max_tickets_per_user: concert.max_tickets_per_user,
+      zone_count: concert._count.zones,
+      show_times: concert.show_times.map((st) => ({
+        show_time_id: st.showtime_id,
+        show_date: st.show_date,
+        total_seats: st._count.seats, // ข้อมูลเพิ่มเติมสำหรับ Admin
+      })),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Get all concerts for Admin successfully",
+      data: formattedData,
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcertBody>, res: Response) => {
   const { id } = req.params;
   try {

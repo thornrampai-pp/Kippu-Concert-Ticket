@@ -10,12 +10,46 @@ import { useRouter } from "next/navigation";
 
 const supabase = createClient(ENV.SUPABASE.url, ENV.SUPABASE.key);
 
-export const useConcert = () => {
+export const useAdminConcert = () => {
   const [concerts, setConcert] = useState<Concert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchConcerts = async () => {
+  const fetchAdminConcerts = async () => {
+    try {
+      setIsLoading(true);
+      const data = await concertService.getAdminAllConcerts();
+      setConcert(data)
+    } catch (e) {
+      console.log(e)
+      setError("Failed to fetch concerts");
+    } finally {
+      setIsLoading(false);
+
+    }
+  };
+  useEffect(() => {
+    fetchAdminConcerts();
+  }, []);
+  console.log(concerts)
+
+  return {
+    concerts,
+    isLoading,
+    error,
+    fetchAdminConcerts
+  }
+
+
+
+}
+
+export const useConcert = () =>{
+  const [concerts, setConcert] = useState<Concert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAdminConcerts = async () => {
     try {
       setIsLoading(true);
       const data = await concertService.getAllConcerts();
@@ -29,7 +63,7 @@ export const useConcert = () => {
     }
   };
   useEffect(() => {
-    fetchConcerts();
+    fetchAdminConcerts();
   }, []);
   console.log(concerts)
 
@@ -37,9 +71,8 @@ export const useConcert = () => {
     concerts,
     isLoading,
     error,
-    fetchConcerts
+    fetchAdminConcerts
   }
-
 
 }
 

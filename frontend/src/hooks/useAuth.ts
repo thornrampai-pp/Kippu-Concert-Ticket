@@ -66,7 +66,30 @@ export const useAuth = () => {
     }
   };
 
-  return { loginGoogle, isLoading, user };
+  const handleLogout = async () => {
+    setIsLoading(true);
+    try {
+      //  บอก Backend ให้ล้าง HttpOnly Cookie (ผ่าน authService ที่คุณเขียนไว้)
+      await authService.logout();
+
+      //  บอก Firebase ให้ Sign Out
+      await auth.signOut();
+
+      //  ล้าง State ในเครื่อง
+      setUser(null);
+
+     
+      window.location.href = "/login";
+      router.refresh(); // เพื่อล้าง cache ของ server components
+    } catch (err) {
+      console.error("Logout Error:", err);
+      alert("Logout failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { loginGoogle, handleLogout, isLoading, user };
 };
 
 export const useAdminGuard = () => {

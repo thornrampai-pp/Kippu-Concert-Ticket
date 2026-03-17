@@ -1,29 +1,32 @@
 "use client";
 
 import Header from "@/src/components/Header";
-import { useConcert } from "../../hooks/useConcert";
+import { useAdminConcert } from "../../hooks/useConcert";
 import { useRouter } from "next/navigation";
 import CardConcert from "@/src/components/CardConcert";
 import { useAdminGuard } from "@/src/hooks/useAuth";
 
-// src/app/admin/page.tsx
 export default function Page() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
-  const { concerts, isLoading, error } = useConcert();
+  const { concerts, isLoading, error } = useAdminConcert();
   const router = useRouter();
 
   // ปล่อยให้ Guard จัดการเรื่อง Redirect แต่เราจะ Render โครงสร้างหลักรอไว้
   return (
     <div className="min-h-screen bg-zinc-900">
       <Header />
-      
+
       <div className="p-6 flex flex-col gap-6 ">
         {authLoading ? (
-          <p className="text-white text-center mt-10 animate-pulse">Checking Permission...</p>
+          <p className="text-white text-center mt-10 animate-pulse">
+            Checking Permission...
+          </p>
         ) : isAdmin ? (
           <>
             <div className="flex justify-between items-center gap-4">
-              <h1 className="text-2xl font-bold text-white">Concert Management</h1>
+              <h1 className="text-2xl font-bold text-white">
+                Concert Management
+              </h1>
               <button
                 className="cursor-pointer bg-white text-black px-4 py-2 rounded-lg"
                 onClick={() => router.push("/admin/concert/new")}
@@ -33,7 +36,7 @@ export default function Page() {
             </div>
 
             {isLoading ? (
-              <p className="p-6 text-white text-center">Loading...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
             ) : error ? (
               <p className="p-6 text-red-500">{error}</p>
             ) : concerts.length === 0 ? (
@@ -47,7 +50,6 @@ export default function Page() {
             )}
           </>
         ) : null}
-        
       </div>
     </div>
   );

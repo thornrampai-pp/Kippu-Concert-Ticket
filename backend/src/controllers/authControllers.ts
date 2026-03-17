@@ -43,6 +43,13 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
 
 export const logoutGoogle = async (req: Request, res: Response) => {
   try {
+   
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
     return res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (e) {
     return res.status(500).json({ success: false, message: "Logout failed" });

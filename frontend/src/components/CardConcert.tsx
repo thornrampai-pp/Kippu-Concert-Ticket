@@ -3,17 +3,31 @@
 import Image from "next/image";
 import { Concert } from "../types";
 import { useRouter } from "next/navigation";
+import { useAdminGuard } from "../hooks/useAuth";
 interface Props {
   concert: Concert;
 }
 
 function CardConcert({ concert }: Props) {
+  const { isAdmin } = useAdminGuard();
   const router = useRouter();
   console.log("Concert Object:", concert);
+
+  const formatDateTime = (dateString: string) => {
+    return (
+      new Date(dateString).toLocaleString("th-TH", {
+        day: "2-digit",
+        month: "short",
+        year: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }) + " น."
+    );
+  };
   return (
     <div
       className="bg-gray-200 rounded-xl shadow hover:shadow-lg transition overflow-hidden cursor-pointer"
-      onClick={() => router.push(`/admin/detail/${concert.concert_id}`)}
+      onClick={() => isAdmin ? router.push(`/admin/detail/${concert.concert_id}`): router.push(`/detail/${concert.concert_id}`)}
     >
       {/* image */}
       <div className="relative w-full h-48">
@@ -35,12 +49,16 @@ function CardConcert({ concert }: Props) {
       {/* content */}
       <div className="p-4">
         <h3 className="font-bold text-lg">{concert.concert_name}</h3>
-
         <p className="text-sm text-gray-600 mt-1">{concert.location}</p>
-
-        <p className="text-xs text-gray-500 mt-2">
-          {concert.is_visible ? "Visible" : "Hidden"}
-        </p>
+        {isAdmin ? (
+          <p className="text-xs text-gray-500 mt-2">
+            {concert.is_visible ? "Visible" : "Hidden"}
+          </p>
+        ) : (
+          <p className="text-xs text-gray-500 mt-2">
+            {formatDateTime(concert.sale_start_time)}
+          </p>
+        )}
       </div>
     </div>
   );

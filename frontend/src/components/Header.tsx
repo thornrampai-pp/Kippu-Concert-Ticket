@@ -3,13 +3,12 @@
 import { FaCircleUser, FaTicketSimple } from "react-icons/fa6";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuthContext } from "../context/authContext";
+import { useAuth } from "../hooks/useAuth";
 
 function Header() {
-  const { user,  } = useAuthContext();
+  const { handleLogout, user } = useAuth();
   const isAdmin = user?.role?.role_id === 2;
   const homeHref = isAdmin ? "/admin" : "/";
-
   // ป้องกันการแสดงผลผิดพลาดขณะกำลังโหลดข้อมูล
   return (
     <div className="flex w-full h-15 justify-between items-center bg-zinc-400 px-5 py-4">
@@ -22,18 +21,26 @@ function Header() {
       <div className="flex items-center gap-4">
         <Link href={homeHref}>Home</Link>
         <Link href="/booking">Booking</Link>
-
-        <div className="cursor-pointer">
-          <FaCircleUser size={40} />
-          {/* <Image
+        {isAdmin ? (
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 transition"
+          >
+            Log out
+          </button>
+        ) : (
+          <div className="cursor-pointer">
+            <FaCircleUser size={40} />
+            {/* <Image
             src="/profile.jpg"
             alt="profile"
             width={40}
             height={40}
             className="rounded-full" */}
-          {/* // onClick={} */}
-          {/* /> */}
-        </div>
+            {/* // onClick={} */}
+            {/* /> */}
+          </div>
+        )}
       </div>
     </div>
   );

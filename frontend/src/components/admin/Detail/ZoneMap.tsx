@@ -77,7 +77,7 @@ const ZoneMap = ({ zones, showTimes, selectedShowTimeId }: Props) => {
           {zones.map((zone) => {
             const isHovered = hoveredZoneId === zone.zone_id;
 
-            // ✅ หาจำนวนที่นั่งว่างของโซนนี้ในรอบที่เลือก
+            // หาจำนวนที่นั่งว่างของโซนนี้ในรอบที่เลือก
             const avail = currentShow?.zones_availability?.find(
               (a) => a.zone_id === zone.zone_id,
             );
@@ -95,9 +95,9 @@ const ZoneMap = ({ zones, showTimes, selectedShowTimeId }: Props) => {
                   document.body.style.cursor = "default";
                   setHoveredZoneId(null);
                 }}
-                onClick={() =>
-                  !isSoldOut && alert(`เลือกโซน: ${zone.zone_name}`)
-                }
+                // onClick={() =>
+                //   !isSoldOut && alert(`เลือกโซน: ${zone.zone_name}`)
+                // }
               >
                 <Rect
                   x={zone.pos_x}
