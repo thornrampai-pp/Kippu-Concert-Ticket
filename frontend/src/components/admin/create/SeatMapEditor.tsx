@@ -1,16 +1,17 @@
 "use client";
 
 import { Stage, Layer, Rect, Text, Group } from "react-konva";
-import { ZoneInput } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useRef, useState } from "react";
+import { ZoneInput } from "@/src/types";
 
 interface Props {
   zones: ZoneInput[];
   onZoneChange: (updatedZones: ZoneInput[]) => void;
+  isEdit?: boolean;
 }
 
-const SeatMapEditor = ({ zones, onZoneChange }: Props) => {
+const SeatMapEditor = ({ zones, onZoneChange, isEdit = false }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, scale: 1 });
 

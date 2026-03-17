@@ -74,30 +74,25 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
         concert_id: Number(id),
       },
       include: {
-        // เพิ่มการดึง show_times เพื่อให้เหมือนกับ getAllConcert
         show_times: {
           orderBy: {
             show_date: "asc",
           },
-        },
-        // ดึง zones ออกมาด้วยเพื่อคำนวณราคาเริ่มต้น (หรือแสดงรายการโซน)
-        zones: {
-          // ✅ ใช้ include เพื่อเอา "ทุกฟิลด์" ของ Zone (รวมถึงพิกัดที่คุณต้องการ)
           include: {
+            seats: {
+              where: { status: SeatStatus.AVAILABLE },
+              select: { zone_id: true }
+            },
             _count: {
               select: {
-                // นับจำนวน Seat ที่ถูกจองไปแล้ว (is_booked: true)
-                // ตรวจสอบชื่อฟิลด์ใน Schema ของคุณอีกครั้งนะครับ
                 seats: {
-                  where: { status: SeatStatus.AVAILABLE }
+                  where: { status: SeatStatus.AVAILABLE } // นับเฉพาะที่ว่างในรอบนั้น
                 }
               }
             }
-          },
-          orderBy: {
-            price: "asc",
-          },
+          }
         },
+        zones: true // ข้อมูลพื้นฐานของโซน (ราคา, พิกัด) ดึงแยกไว้แบบเดิมได้
       },
     });
 
@@ -113,18 +108,35 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
 
     // 3. Mapping ข้อมูลให้ชื่อ Field ตรงกับ getAllConcert
     const formattedData = {
-      ...concert,
-      show_times: concert.show_times.map((st) => ({
-        show_time_id: st.showtime_id,
-        show_date: st.show_date,
-      })),
-      zones: concert.zones.map((zone) => ({
-        ...zone,
-       
-        remaining_seats: zone._count.seats,
-       
-        _count: undefined
-      }))
+      concert_id: concert.concert_id,
+      concert_name: concert.concert_name,
+      concert_detail: concert.concert_detail,
+      image_url: concert.image_url,
+      location: concert.location,
+      sale_start_time: concert.sale_start_time,
+      is_visible: concert.is_visible,
+      max_tickets_per_user: concert.max_tickets_per_user,
+      // แสดง List รอบเวลาทั้งหมดที่มีในฐานข้อมูล
+      show_times: concert.show_times.map((st) => {
+        // 1. สร้าง Map เพื่อนับว่าในรอบนี้ แต่ละ zone_id เหลือที่นั่งเท่าไหร่
+        const availabilityMap = st.seats.reduce((acc: Record<number, number>, seat) => {
+          acc[seat.zone_id] = (acc[seat.zone_id] || 0) + 1;
+          return acc;
+        }, {});
+
+        return {
+          showtime_id: st.showtime_id,
+          show_date: st.show_date,
+          remaining_total: st._count.seats,
+          // ✅ 2. เพิ่มฟิลด์นี้ เพื่อให้ Frontend รู้ว่าโซนไหนเหลือกี่ที่ในรอบนี้
+          zones_availability: concert.zones.map(z => ({
+            zone_id: z.zone_id,
+            remaining: availabilityMap[z.zone_id] || 0
+          }))
+        };
+      }),
+      zones: concert.zones
+    
     };
 
     return res.status(200).json({
@@ -272,12 +284,12 @@ export const createConcert = async (
 export const updateConcert = async (req: Request, res: Response) => {
   const { id } = req.params;
   const {
-    concertName,
-    concertDetail,
+    concert_name,     
+    concert_detail,    
     location,
-    isVisible,
-    saleStartTime,
-    maxTicketsPerUser
+    is_visible,        
+    sale_start_time,   
+    max_tickets_per_user 
   } = req.body;
 
   try {
@@ -286,12 +298,12 @@ export const updateConcert = async (req: Request, res: Response) => {
         concert_id: Number(id)
       },
       data: {
-        ...(concertName && { concert_name: concertName }),
-        ...(concertDetail && { concert_detail: concertDetail }),
-        ...(location && { location: location }),
-        ...(isVisible !== undefined && { is_visible: isVisible }),
-        ...(saleStartTime && { sale_start_time: new Date(saleStartTime) }),
-        ...(maxTicketsPerUser !== undefined && { max_tickets_per_user: maxTicketsPerUser })
+        ...(concert_name && { concert_name }),
+        ...(concert_detail && { concert_detail }),
+        ...(location && { location }),
+        ...(is_visible !== undefined && { is_visible }),
+        ...(sale_start_time && { sale_start_time: new Date(sale_start_time) }),
+        ...(max_tickets_per_user !== undefined && { max_tickets_per_user })
 
       }
     });

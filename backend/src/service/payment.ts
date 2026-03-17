@@ -11,19 +11,19 @@ export async function finalizeSuccessfulPayment(tx: any, booking: any, charge: a
     }
   });
 
-  // 2. อัปเดตสถานะการจองเป็น SUCCESS
+  // อัปเดตสถานะการจองเป็น SUCCESS
   await tx.booking.update({
     where: { booking_id: booking.booking_id },
     data: { status: BookingStatus.SUCCESS }
   });
 
-  // 3. อัปเดต Invoice เป็น PAID
+  //  อัปเดต Invoice เป็น PAID
   await tx.invoice.updateMany({
     where: { booking_id: booking.booking_id },
     data: { status: InvoiceStatus.PAID }
   });
 
-  // 4. บันทึกข้อมูลการชำระเงิน พร้อมเวลา paid_at
+  //  บันทึกข้อมูลการชำระเงิน พร้อมเวลา paid_at
   // ใช้ upsert เพื่อกันกรณี Webhook กับ Controller ทำงานซ้ำซ้อนกัน
   await tx.payment.upsert({
     where: { transaction_id: charge.id },

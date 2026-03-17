@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { CreateConcertInput, ZoneInput } from "../types";
+import { CreateConcertInput, ZoneInput } from "../../../types";
 
 interface Props {
   zones: ZoneInput[];
   setConcertData: React.Dispatch<React.SetStateAction<CreateConcertInput>>;
+  isEdit?: boolean;
 }
 
-const ZonesForm = ({ zones, setConcertData }: Props) => {
+const ZonesForm = ({ zones, setConcertData,isEdit= false}: Props) => {
   const [zoneInput, setZoneInput] = useState<ZoneInput>({
     zone_name: "",
     price: 0,

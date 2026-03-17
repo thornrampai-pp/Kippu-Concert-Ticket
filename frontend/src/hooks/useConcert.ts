@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, useCallback, useEffect, useState ,} from "react";
-import { Concert, CreateConcertInput, ImageFile } from "../types";
+import { Concert, CreateConcertInput, ImageFile, ZoneInput, ZoneUpdatePayload } from "../types";
 import { concertService } from "../services/concertService";
 import { createClient } from "@supabase/supabase-js";
 import { ENV } from "../config/env";
@@ -130,6 +130,7 @@ export const useImageUpload = () => {
   };
 };
 
+
 export const useCreateConcert = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,6 +174,58 @@ export const useCreateConcert = () => {
     loading,
     error,
   };
+};
+
+export const useUpdateConcert = () => {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleUpdateConcert = async (
+    id: string,
+    data: CreateConcertInput,
+    uploadFn?: () => Promise<string[]>
+  ) => {
+    try {
+      setLoading(true);
+
+      //  อัปโหลดรูปไป Supabase (ถ้ามีรูปใหม่)
+      let finalImageUrl = data.image_url;
+      if (uploadFn) {
+        const uploadedUrls = await uploadFn();
+        // รวมรูปที่มีอยู่แล้ว + รูปที่เพิ่งอัปโหลดใหม่
+        finalImageUrl = [...(data.image_url || []), ...uploadedUrls];
+      }
+
+      //  อัปเดตข้อมูลคอนเสิร์ตหลัก (ชื่อ, สถานที่, วันขาย)
+      // ส่ง finalImageUrl ที่อัปเดตแล้วไปด้วย
+      await concertService.updateConcertInfo(id, { ...data, image_url: finalImageUrl });
+
+      //  อัปเดตโซน
+      const zoneActions = data.zones.map((zone: ZoneUpdatePayload) => {
+        if (zone.zone_id) {
+          // โซนเดิม 
+          return concertService.updateZone(zone.zone_id, zone);
+        } else {
+          // โซนใหม่ 
+          return concertService.addZone(id, zone);
+        }
+      });
+
+      await Promise.all(zoneActions);
+
+      alert("บันทึกข้อมูลสำเร็จ");
+      router.push("/admin");
+      router.refresh(); // เพื่อให้หน้า Admin โหลดข้อมูลใหม่ล่าสุด
+
+    } catch (err) {
+      console.error("Update Error:", err);
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาตรวจสอบ Console");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { handleUpdateConcert, loading };
 };
 
 export const useConcertById = (id: string | undefined) => {

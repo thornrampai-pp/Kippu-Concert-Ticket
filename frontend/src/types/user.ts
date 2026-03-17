@@ -17,7 +17,7 @@ export interface Role {
 
 export interface UpdateProfileInput {
   user_name?: string;
-  phoneNumber?: string;
+  phone_number?: string;
   image_url?: string;
 }
 

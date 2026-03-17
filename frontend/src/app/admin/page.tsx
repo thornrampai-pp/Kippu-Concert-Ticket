@@ -26,7 +26,7 @@ export default function Page() {
               <h1 className="text-2xl font-bold text-white">Concert Management</h1>
               <button
                 className="cursor-pointer bg-white text-black px-4 py-2 rounded-lg"
-                onClick={() => router.push("/admin/create")}
+                onClick={() => router.push("/admin/concert/new")}
               >
                 Create Concert
               </button>
@@ -47,6 +47,7 @@ export default function Page() {
             )}
           </>
         ) : null}
+        
       </div>
     </div>
   );

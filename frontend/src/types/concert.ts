@@ -12,21 +12,28 @@ export interface Concert {
   max_tickets_per_user: number;
 
   zones?: Zone[];
-  show_times?: Showtime[];
+  show_times: Showtime[];
 }
 
 
 export interface Showtime {
   showtime_id: number;
   show_date: string;
-  concert_id: number;
+  remaining_total: number;
+
+  zones_availability: {
+    zone_id: number;
+    remaining: number;
+  }[];
+
 }
 
 
 export interface Zone {
   zone_id: number;
   zone_name: string;
-  price: number;
+  price: string;
+  color: string;
 
   row_count: number;
   seat_per_row: number;
@@ -39,7 +46,6 @@ export interface Zone {
   width: number;
   height: number;
 
-  remaining_seats: number;
   booked_seats?: number;
 
   seats?: Seat[];
@@ -112,4 +118,8 @@ export interface ApiResponse<T> {
 export interface ImageFile {
   file: File;
   preview: string;
+}
+
+export interface ZoneUpdatePayload extends ZoneInput {
+  zone_id?: number;
 }

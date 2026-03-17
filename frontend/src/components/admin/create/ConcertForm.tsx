@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { useConcertDates, useImageUpload } from "../hooks/useConcert";
+import { useConcertDates, useImageUpload } from "../../../hooks/useConcert";
 import Image from "next/image";
-import { CreateConcertInput, ImageFile } from "../types";
+import { CreateConcertInput, ImageFile } from "../../../types";
 
 interface ImageUploadProps {
   images: ImageFile[]; 
@@ -14,6 +14,7 @@ interface Props {
   concertData: CreateConcertInput;
   setConcertData: React.Dispatch<React.SetStateAction<CreateConcertInput>>;
   imageUploadProps: ImageUploadProps;
+  isEdit?: boolean;
 }
 
 
@@ -21,6 +22,7 @@ const ConcertForm = ({
   concertData,
   setConcertData,
   imageUploadProps,
+  isEdit = false,
 }: Props) => {
   
   const { dates, addDate, removeDate, setDates } = useConcertDates();
