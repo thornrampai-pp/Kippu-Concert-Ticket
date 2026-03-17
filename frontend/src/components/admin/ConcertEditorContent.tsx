@@ -31,7 +31,7 @@ export default function ConcertEditorContent({
 
   const { handleCreateConcert, loading: loadingCreate } = useCreateConcert();
   const { handleUpdateConcert, loading: loadingUpdate } = useUpdateConcert();
-  const imageUpload = useImageUpload();
+  const imageUpload = useImageUpload(initialData.image_url);
 
 
   const loading = loadingCreate || loadingUpdate;

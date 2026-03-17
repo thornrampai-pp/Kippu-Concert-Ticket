@@ -58,9 +58,23 @@ export const useConcertDates = () => {
 
 
 
-export const useImageUpload = () => {
-  const [images, setImages] = useState<ImageFile[]>([]);
+export const useImageUpload = (initialUrls: string[] = []) => {
+  const [images, setImages] = useState<ImageFile[]>(() =>
+    initialUrls.map((url) => ({
+      file: new File([], ""), // สร้างไฟล์ว่างเพื่อบอกว่าเป็นรูปเก่าที่มีอยู่แล้ว
+      preview: url,
+    }))
+  );
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (initialUrls && initialUrls.length > 0) {
+      setImages(initialUrls.map(url => ({
+        file: new File([], ""),
+        preview: url
+      })));
+    }
+  }, [initialUrls.join(",")]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -86,19 +100,26 @@ export const useImageUpload = () => {
   const uploadAllImages = async (): Promise<string[]> => {
     setIsUploading(true);
     try {
-      const uploadPromises = images.map(async (img) => {
+      // 3. แยกรูปเก่าและรูปใหม่
+      // รูปเก่า = รูปที่มี preview เป็น URL จริง (ไม่ใช่ blob) หรือไฟล์ขนาด 0
+      const existingUrls = images
+        .filter(img => !img.preview.startsWith('blob:'))
+        .map(img => img.preview);
+
+      // รูปใหม่ = รูปที่มี preview เป็น blob (เพิ่งเลือกมาจากเครื่อง)
+      const newFiles = images.filter(img => img.preview.startsWith('blob:'));
+
+      const uploadPromises = newFiles.map(async (img) => {
         const fileExt = img.file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `concert-images/${Date.now()}_${fileName}`;
 
-        // 1. อัปโหลดไฟล์ไปที่ Bucket ชื่อ 'concerts' (ต้องสร้าง Bucket นี้ในเว็บ Supabase ก่อน)
         const { data, error } = await supabase.storage
           .from('concerts')
           .upload(filePath, img.file);
 
         if (error) throw error;
 
-        // 2. ดึง Public URL ของรูปออกมา
         const { data: { publicUrl } } = supabase.storage
           .from('concerts')
           .getPublicUrl(filePath);
@@ -106,7 +127,10 @@ export const useImageUpload = () => {
         return publicUrl;
       });
 
-      return await Promise.all(uploadPromises);
+      const newlyUploadedUrls = await Promise.all(uploadPromises);
+
+      // 4. รวม URL เก่าที่ยังเหลืออยู่ กับ URL ใหม่ที่เพิ่งอัปโหลด
+      return [...existingUrls, ...newlyUploadedUrls];
     } catch (error) {
       console.error("Supabase Upload Error:", error);
       throw error;
@@ -117,7 +141,9 @@ export const useImageUpload = () => {
 
   useEffect(() => {
     return () => {
-      images.forEach(img => URL.revokeObjectURL(img.preview));
+      images.forEach(img => {
+        if (img.preview.startsWith('blob:')) URL.revokeObjectURL(img.preview);
+      });
     };
   }, [images]);
 
@@ -191,9 +217,9 @@ export const useUpdateConcert = () => {
       //  อัปโหลดรูปไป Supabase (ถ้ามีรูปใหม่)
       let finalImageUrl = data.image_url;
       if (uploadFn) {
-        const uploadedUrls = await uploadFn();
+        
         // รวมรูปที่มีอยู่แล้ว + รูปที่เพิ่งอัปโหลดใหม่
-        finalImageUrl = [...(data.image_url || []), ...uploadedUrls];
+        finalImageUrl = await uploadFn();
       }
 
       //  อัปเดตข้อมูลคอนเสิร์ตหลัก (ชื่อ, สถานที่, วันขาย)
@@ -213,7 +239,7 @@ export const useUpdateConcert = () => {
 
       await Promise.all(zoneActions);
 
-      alert("บันทึกข้อมูลสำเร็จ");
+      // alert("บันทึกข้อมูลสำเร็จ");
       router.push("/admin");
       router.refresh(); // เพื่อให้หน้า Admin โหลดข้อมูลใหม่ล่าสุด
 

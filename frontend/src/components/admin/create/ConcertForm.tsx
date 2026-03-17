@@ -29,11 +29,14 @@ const ConcertForm = ({
   const { images, handleImageChange, removeImage } = imageUploadProps
 
   useEffect(() => {
-    setConcertData((prev) => ({
-      ...prev,
-      image_url: images.map((img) => img.preview),
-    }));
-  }, [images, setConcertData]);
+    if (isEdit && concertData.show_times) {
+      // แปลงวันที่ให้อยู่ในรูปแบบ datetime-local (yyyy-MM-ddThh:mm)
+      const formattedDates = concertData.show_times.map((d) =>
+        new Date(d).toISOString().slice(0, 16),
+      );
+      setDates(formattedDates);
+    }
+  }, []);
 
   useEffect(() => {
     setConcertData((prev) => ({

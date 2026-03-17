@@ -289,7 +289,9 @@ export const updateConcert = async (req: Request, res: Response) => {
     location,
     is_visible,        
     sale_start_time,   
-    max_tickets_per_user 
+    max_tickets_per_user ,
+    image_url
+
   } = req.body;
 
   try {
@@ -303,8 +305,8 @@ export const updateConcert = async (req: Request, res: Response) => {
         ...(location && { location }),
         ...(is_visible !== undefined && { is_visible }),
         ...(sale_start_time && { sale_start_time: new Date(sale_start_time) }),
-        ...(max_tickets_per_user !== undefined && { max_tickets_per_user })
-
+        ...(max_tickets_per_user !== undefined && { max_tickets_per_user }),
+        ...(image_url && { image_url })
       }
     });
     if (!concert) return res.status(404).json({ success: false, message: "Concert not found" });
