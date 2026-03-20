@@ -1,8 +1,8 @@
 "use client";
 
 import { ChangeEvent, useCallback, useEffect, useState ,} from "react";
-import { Concert, CreateConcertInput, ImageFile, ZoneInput, ZoneUpdatePayload } from "../types";
-import { concertService } from "../services/concertService";
+import { ApiError, Concert, CreateConcertInput, ImageFile, Seat, Zone, ZoneInput, ZoneUpdatePayload } from "../types";
+import { concertService ,} from "../services/concertService";
 import { createClient } from "@supabase/supabase-js";
 import { ENV } from "../config/env";
 import { useRouter } from "next/navigation";
@@ -286,36 +286,84 @@ export const useUpdateConcert = () => {
 
   return { handleUpdateConcert, loading };
 };
-
 export const useConcertById = (id: string | undefined) => {
   const [concert, setConcert] = useState<Concert | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchConcert = useCallback(async () => {
+  // แยก Logic ออกมาเป็นฟังก์ชันปกติ
+  const fetchConcert = async () => {
     if (!id) return;
-
     try {
       setIsLoading(true);
-      setError(null);
       const data = await concertService.getConcertById(id);
       setConcert(data);
     } catch (err) {
-      console.error("Fetch Concert Error:", err);
       setError("Cant get concert");
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  };
 
+  // รันแค่ตอน id เปลี่ยนเท่านั้น (ไม่ต้องใส่ fetchConcert ใน dependency)
   useEffect(() => {
     fetchConcert();
-  }, [fetchConcert]);
+  }, [id]);
 
   return {
     concert,
     isLoading,
     error,
-    refresh: fetchConcert, // เผื่อใช้สำหรับปุ่ม Pull to refresh
+    refresh: fetchConcert // ส่งออกไปให้ UI เรียกใช้ตามใจชอบ
   };
 };
+
+export const useZone = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ แก้จาก Seat เป็น Zone เพราะ API คืนข้อมูลโซนที่มีอาเรย์ที่นั่ง
+  const [zoneLayout, setZoneLayout] = useState<Zone | null>(null);
+
+  const fetchZoneLayout = useCallback(async (zoneId: number, showtimeId: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // concertService.getZoneLayout ควรจะ return ข้อมูลประเภท Zone
+      const data = await concertService.getZoneLayout(zoneId, showtimeId);
+      setZoneLayout(data);
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      setError(error.response?.data?.message || "Failed to fetch zone layout");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // ฟังก์ชันสำหรับ Admin (แก้ Parameter ให้ตรงกับที่จะส่งไป)
+  const updateZoneSeat = async (zoneId: number, data: Partial<Zone>) => {
+    try {
+      setIsLoading(true);
+      const result = await concertService.updateZoneSeat(zoneId, data);
+      return result;
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      const msg = error.response?.data?.message || "Update failed";
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    zoneLayout,
+    isLoading,
+    error,
+    fetchZoneLayout,
+    updateZoneSeat,
+    setZoneLayout
+  };
+};
+

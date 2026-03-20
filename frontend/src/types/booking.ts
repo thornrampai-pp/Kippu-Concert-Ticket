@@ -51,3 +51,20 @@ export interface Receipt {
   issued_at: string;
   pdf_url?: string;
 }
+
+export interface PendingBooking {
+  concertId: number;
+  concertName: string;
+  concertImage: string;
+  concertLocation: string;
+  showtime: string;
+  zoneId: number;
+  zoneName: string;
+  price: number;
+  // เก็บทั้ง ID (ส่ง Backend) และ Number (โชว์ UI)
+  seats: {
+    id: number;     // seat_id สำหรับ Prisma
+    name: string;   // seat_number สำหรับแสดงผล เช่น "A1"
+  }[];
+  totalPrice: number;
+}

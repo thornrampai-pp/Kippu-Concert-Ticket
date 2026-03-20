@@ -3,11 +3,10 @@
 import { FaCircleUser, FaTicketSimple } from "react-icons/fa6";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "../hooks/useAuth";
+import { useAuthContext } from "../context/authContext";
 
 function Header() {
-  const { handleLogout, user } = useAuth();
-  const isAdmin = user?.role?.role_id === 2;
+  const { handleLogout, user, isAdmin } = useAuthContext();
   const homeHref = isAdmin ? "/admin" : "/";
   // ป้องกันการแสดงผลผิดพลาดขณะกำลังโหลดข้อมูล
   return (
@@ -31,12 +30,13 @@ function Header() {
         ) : (
           <div className="cursor-pointer">
             <FaCircleUser size={40} />
-            {/* <Image
-            src="/profile.jpg"
+             {/* <Image
+            src={user}
             alt="profile"
             width={40}
             height={40}
-            className="rounded-full" */}
+            className="rounded-full" 
+            /> */}
             {/* // onClick={} */}
             {/* /> */}
           </div>

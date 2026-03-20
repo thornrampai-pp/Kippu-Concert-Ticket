@@ -1,11 +1,11 @@
 "use client";
 
 import { FcGoogle } from "react-icons/fc";
-import { useAuth } from "../../hooks/useAuth"
 import { FaTicketSimple } from "react-icons/fa6";
+import { useAuthContext } from "@/src/context/authContext";
 
 export default function LoginPage() {
-  const { loginGoogle, isLoading } = useAuth();
+  const { loginGoogle, isLoading } = useAuthContext();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-900">

@@ -8,9 +8,15 @@ interface Props {
   zones: Zone[] | undefined;
   showTimes: Showtime[] | undefined;
   selectedShowTimeId: number | null;
+  onSelectZone?: (zone: Zone) => void;
 }
 
-const ZoneMap = ({ zones, showTimes, selectedShowTimeId }: Props) => {
+const ZoneMap = ({
+  zones,
+  showTimes,
+  selectedShowTimeId,
+  onSelectZone,
+}: Props) => {
   const [stageSize, setStageSize] = useState({ width: 800, height: 400 });
   const [hoveredZoneId, setHoveredZoneId] = useState<number | null>(null);
 
@@ -88,12 +94,21 @@ const ZoneMap = ({ zones, showTimes, selectedShowTimeId }: Props) => {
               <Group
                 key={zone.zone_id}
                 onMouseEnter={() => {
-                  document.body.style.cursor = "pointer";
-                  setHoveredZoneId(zone.zone_id);
+                  if (!isSoldOut) {
+                    document.body.style.cursor = "pointer";
+                    setHoveredZoneId(zone.zone_id);
+                  }
                 }}
                 onMouseLeave={() => {
                   document.body.style.cursor = "default";
                   setHoveredZoneId(null);
+                }}
+                // ✅ เพิ่มเหตุการณ์คลิกตรงนี้
+                onClick={() => {
+                  if (!isSoldOut) onSelectZone?.(zone);
+                }}
+                onTap={() => {
+                  if (!isSoldOut) onSelectZone?.(zone);
                 }}
                 // onClick={() =>
                 //   !isSoldOut && alert(`เลือกโซน: ${zone.zone_name}`)

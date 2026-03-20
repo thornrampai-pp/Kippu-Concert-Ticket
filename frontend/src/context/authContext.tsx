@@ -8,12 +8,16 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAdmin: boolean; // 1. เพิ่มสถานะ isAdmin เข้าไป
+  loginGoogle: () => Promise<void>;
+  handleLogout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   isAdmin: false, // ค่าเริ่มต้นเป็น false
+  loginGoogle: async () => {},
+  handleLogout: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

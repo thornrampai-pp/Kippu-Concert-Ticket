@@ -7,7 +7,9 @@ import Image from "next/image";
 import { IoArrowBack } from "react-icons/io5";
 import ZoneRemain from "@/src/components/admin/Detail/ZoneRemain";
 import ZoneMap from "@/src/components/admin/Detail/ZoneMap";
-import {  useState } from "react";
+import { useState } from "react";
+import { Zone } from "@/src/types";
+import SeatPicker from "@/src/components/SeatPicker";
 
 const ConcertDetailPage = () => {
   const router = useRouter();
@@ -16,16 +18,17 @@ const ConcertDetailPage = () => {
   const id = params.id as string;
 
   const { concert, isLoading, error } = useConcertById(id);
- 
 
   //  เมื่อโหลดข้อมูลเสร็จ ให้ set รอบแรกเป็นค่าเริ่มต้น
-const [selectedShowTimeId, setSelectedShowTimeId] = useState<number | null>(
-  null,
-);
+  const [selectedShowTimeId, setSelectedShowTimeId] = useState<number | null>(
+    null,
+  );
 
- const activeShowTimeId =
-   selectedShowTimeId ?? concert?.show_times?.[0]?.showtime_id;
-  
+  const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
+
+  const activeShowTimeId =
+    selectedShowTimeId ?? concert?.show_times?.[0]?.showtime_id;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
@@ -48,7 +51,13 @@ const [selectedShowTimeId, setSelectedShowTimeId] = useState<number | null>(
       </div>
     );
   }
+  const handleZoneSelect = (zone: Zone) => {
+    console.log("Selected Zone Data:", zone);
+    setSelectedZone(zone);
 
+    // หรือถ้าจะเปลี่ยนหน้าไปเลย:
+    // router.push(`/booking/${id}/seats?showtime=${activeShowTimeId}&zone=${zone.zone_id}`);
+  };
   // 3. แสดงผลข้อมูลจริง
   return (
     <div className="min-h-screen bg-zinc-900 pb-20">
@@ -130,19 +139,49 @@ const [selectedShowTimeId, setSelectedShowTimeId] = useState<number | null>(
           </div>
         </div>
         <div className="pt-8">
-          <h2 className="text-white text-2xl mb-4">Seat Availability</h2>
-          <ZoneMap
-            zones={concert.zones}
-            showTimes={concert.show_times} // ส่งเพิ่ม
-            selectedShowTimeId={selectedShowTimeId}
-          />
-          <div className="mt-6">
-            <ZoneRemain
-              zones={concert.zones}
-              showTimes={concert.show_times} // ส่งเพิ่ม
-              selectedShowTimeId={selectedShowTimeId}
-            />
-          </div>
+          <h2 className="text-white text-2xl mb-4">
+            {selectedZone
+              ? `ผังที่นั่งโซน ${selectedZone.zone_name}`
+              : "Seat Availability"}
+          </h2>
+
+          {!selectedZone ? (
+            /* --- กรณีที่ยังไม่ได้เลือกโซน: แสดงแผนผังรวม --- */
+            <>
+              <ZoneMap
+                zones={concert.zones}
+                showTimes={concert.show_times}
+                selectedShowTimeId={activeShowTimeId ?? null}
+                onSelectZone={handleZoneSelect}
+              />
+              <div className="mt-6">
+                <ZoneRemain
+                  zones={concert.zones}
+                  showTimes={concert.show_times}
+                  selectedShowTimeId={activeShowTimeId ?? null}
+                />
+              </div>
+            </>
+          ) : (
+            /* --- กรณีที่เลือกโซนแล้ว: แสดงผังที่นั่ง (SeatPicker) --- */
+            <div className="animate-in fade-in slide-in-from-bottom-4">
+              {/* ปุ่มกดย้อนกลับไปเลือกโซนใหม่ */}
+              <button
+                onClick={() => setSelectedZone(null)}
+                className="mb-4 text-emerald-400 hover:text-emerald-300 flex items-center gap-2 transition"
+              >
+                <IoArrowBack /> เลือกโซนอื่น
+              </button>
+
+              {/* Component ผังที่นั่งที่เราจะสร้างใหม่ */}
+              <SeatPicker
+                concert={concert}
+                zone={selectedZone}
+                showtimeId={activeShowTimeId ?? null}
+                onCancel={() => setSelectedZone(null)}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

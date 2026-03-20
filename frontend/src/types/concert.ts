@@ -60,7 +60,7 @@ export interface Seat {
   seat_number: string;
   row_label: string;
   column_num: number;
-
+  
   status: SeatStatus;
   reserved_until?: string | null;
 
@@ -122,4 +122,13 @@ export interface ImageFile {
 
 export interface ZoneUpdatePayload extends ZoneInput {
   zone_id?: number;
+}
+
+export interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message: string;
 }

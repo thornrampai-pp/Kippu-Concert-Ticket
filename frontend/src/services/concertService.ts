@@ -1,5 +1,5 @@
 import axiosInstance from "../lib/axios";
-import { Concert, CreateConcertInput, ApiResponse, ZoneInput } from "../types";
+import { Concert, CreateConcertInput, ApiResponse, ZoneInput, Seat, Zone } from "../types";
 export const concertService = {
   getAllConcerts: async (): Promise<Concert[]> => {
     const response = await axiosInstance.get<ApiResponse<Concert[]>>("/concert/all");
@@ -13,6 +13,12 @@ export const concertService = {
   getConcertById: async (id: string): Promise<Concert> => {
     const response = await axiosInstance.get<ApiResponse<Concert>>(`/concert/${id}`);
     return response.data.data;
+  },
+  getZoneLayout: async (id: number, showtimeId: number) => {
+    const res = await axiosInstance.get<ApiResponse<Zone>>(
+      `/zone/seatlayout/${id}?showtime_id=${showtimeId}`
+    );
+    return res.data.data;
   },
 
   createConcert: async (data: CreateConcertInput): Promise<Concert> => {
@@ -61,5 +67,10 @@ export const concertService = {
   addZone: async (concertId: string, zoneData: Partial<ZoneInput>) => {
     
     return await axiosInstance.post(`/zone/addzone/${concertId}`, zoneData);
+  },
+
+  updateZoneSeat: async (zoneId: number, data: Partial<Seat>) => {
+    const res = await axiosInstance.post(`/zones/updateseat/${zoneId}`, data);
+    return res.data;
   }
 };
