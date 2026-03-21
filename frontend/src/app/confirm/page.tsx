@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBooking } from "@/src/hooks/useBooking";
 import { bookingService } from "@/src/services/bookingService";
-import { ApiError, PendingBooking } from "@/src/types";
+import { ApiError, ApiResponse, PendingBooking } from "@/src/types";
 
 const ConfirmBookingPage = () => {
   const router = useRouter();
@@ -36,11 +36,14 @@ const ConfirmBookingPage = () => {
         // ล้าง Session เมื่อจองสำเร็จ (เพื่อกันการกดย้อนกลับมาจองซ้ำ)
         clearBooking();
         // ส่งไปหน้า Payment พร้อม ID การจองที่ได้จาก Backend
-        router.push(`/payment/${res.data.booking_id}`);
+        router.push(`confirm/payment/${res.data.booking_id}`);
       }
     } catch (err: unknown) {
-      const error = err as ApiError
-      alert(error.message); // แสดง Error เช่น "ที่นั่งถูกจองไปแล้ว"
+      const error = err as ApiError;
+      const errorMessage =
+        error.response?.data?.message || error.message || "เกิดข้อผิดพลาด";
+      alert(errorMessage);
+    
       router.back(); // ส่งกลับไปเลือกที่นั่งใหม่
     } finally {
       setIsSubmitting(false);

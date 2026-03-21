@@ -7,6 +7,7 @@ import { finalizeSuccessfulPayment } from "../service/payment";
 export const createPayment = async(req:Request,res:Response) =>{
   const { bookingId, token, source } = req.body;
   const userId = req.user?.uid;
+  console.log("📥 Received Source ID:", source);
 
   if(!userId) return res.status(404).json({success:false,message:"Unauthorized"});
 
@@ -18,7 +19,9 @@ export const createPayment = async(req:Request,res:Response) =>{
         status:BookingStatus.PENDING
       },
       include:{
-        booking_items:true,
+        booking_items: {
+          include: { seat: true } // ✅ ควรมีข้อมูลที่นั่งติดไปด้วย
+        },
         invoices:true,
       }
     });
@@ -67,7 +70,7 @@ export const createPayment = async(req:Request,res:Response) =>{
       currency: 'thb',
       return_uri: `${ENV.FRONTEND_URL}/booking/${bookingId}/status`,
       metadata: {
-        bookingId: bookingData.booking_id 
+        bookingId: String(bookingData.booking_id)
       }
     };
 
@@ -125,7 +128,7 @@ export const omiseWebhookHandler = async (req: Request, res: Response) => {
 
   try {
 
-    if (key === "charge.complete") { // check is compleate payment
+    if (data.object === "charge" && data.status === "successful") {  // check is compleate payment
 
       const charge = data;
 
@@ -152,7 +155,7 @@ export const omiseWebhookHandler = async (req: Request, res: Response) => {
         return res.status(200).json({ success: true });
       }
 
-      const bookingData = await prisma.booking.findUnique({
+      const bookingData = await prisma.booking.findFirst({
         where: {
           booking_id: Number(bookingId),
           status: BookingStatus.PENDING

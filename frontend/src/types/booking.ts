@@ -57,6 +57,7 @@ export interface PendingBooking {
   concertName: string;
   concertImage: string;
   concertLocation: string;
+  showtimeId: number;
   showtime: string;
   zoneId: number;
   zoneName: string;
@@ -68,3 +69,32 @@ export interface PendingBooking {
   }[];
   totalPrice: number;
 }
+
+export type OmiseCardType = {
+  configure: (options: {
+    key: string | undefined;
+    currency: string;
+    frameLabel?: string;
+    submitLabel?: string;
+    buttonLabel?: string;
+    location?: string;
+    image?: string;
+    onFormClosed?: () => void;
+   
+  }) => void;
+
+  open: (options: {
+    amount: number;
+    currency?: string;
+    onCreateTokenSuccess?: (token: string) => void;
+    onCreateSourceSuccess?: (source: string) => void;
+    sourceArray?: string[];
+    // เพิ่ม field อื่นๆ ที่อาจจำเป็น
+    frameLabel?: string;
+    submitLabel?: string;
+    defaultPaymentMethod?: string;
+    otherPaymentMethods?: string[];
+    onCreateSourceError?: (err: unknown) => void;
+  }) => void;
+};
+

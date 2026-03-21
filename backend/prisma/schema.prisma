@@ -132,6 +132,8 @@ model BookingItem {
   seat_id         Int
   seat            Seat    @relation(fields: [seat_id], references: [seat_id])
 
+  price           Decimal @db.Decimal(10, 2)
+
   // ป้องกันไม่ให้ที่นั่งตัวเดิมถูกผูกกับการจองใบเดิมซ้ำ (Data Integrity)
   @@unique([booking_id, seat_id])
 }

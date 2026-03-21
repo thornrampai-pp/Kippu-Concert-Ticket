@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Circle, Layer, Stage, Rect, Text, Group } from "react-konva"; // ✅ เพิ่ม Rect, Text, Group
-import { Concert, PendingBooking, Seat, Zone } from "../types";
+import { Concert, Seat, Zone } from "../types";
 import { useZone } from "../hooks/useConcert";
 import { useRouter } from "next/navigation";
 import { useBooking } from "../hooks/useBooking";
@@ -56,10 +56,10 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
       concertId: concert.concert_id,
       concertName: concert.concert_name,
       concertImage: concert.image_url?.[0] || "",
-      concertLocation: concert.location || "สถานที่จัดงาน", // ✅ ใส่ตาม Interface
+      concertLocation: concert.location || "สถานที่จัดงาน",
+      showtimeId: showtimeId!,
       showtime: formattedDate,
-      // เพิ่ม field นี้ใน Interface ด้วยจะดีมาก เพื่อเอาไว้โชว์ที่หน้า Confirm
-      // showtimeDate: formattedDate,
+
       zoneId: zone.zone_id,
       zoneName: zone.zone_name,
       price: Number(zone.price),

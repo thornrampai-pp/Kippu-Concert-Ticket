@@ -10,8 +10,8 @@ type EnvConfig = {
   CLIENT_EMAIL: string
   PRIVATEKEY: string
   FRONTEND_URL: string
-  PUBLICKEY: string
-  SECRETKEY: string
+  OMISE_PUBLIC_KEY: string
+  OMISE_SECRET_KEY: string
 }
 
 export const ENV: EnvConfig = {
@@ -22,18 +22,18 @@ export const ENV: EnvConfig = {
   CLIENT_EMAIL: process.env.CLIENT_EMAIL!,
   PRIVATEKEY: process.env.PRIVATEKEY!,
   FRONTEND_URL: process.env.FRONTEND_URL!,
-  PUBLICKEY: process.env.OMISE_PUBLIC_KEY!,
-  SECRETKEY: process.env.OMISE_SECRET_KEY!,
+  OMISE_PUBLIC_KEY: process.env.OMISE_PUBLIC_KEY!,
+  OMISE_SECRET_KEY: process.env.OMISE_SECRET_KEY!,
   
 };
 
 export const omiseClient = Omise({
-  publicKey: ENV.PUBLICKEY,
-  secretKey: ENV.SECRETKEY,
+  // publicKey: ENV.OMISE_PUBLIC_KEY,
+  secretKey: ENV.OMISE_SECRET_KEY,
 });
 
 
-
+console.log("🔥 SECRET:", ENV.OMISE_SECRET_KEY);
 console.log("DB URL Check:", ENV.DATABASE_URL ? "Found" : "Not Found");
 console.log(ENV.PORT);
 // console.log(ENV.DATABASE_URL);
