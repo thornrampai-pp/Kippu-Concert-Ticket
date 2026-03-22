@@ -70,11 +70,6 @@ export const useOmisePayment = (bookingId: number, amount: number) => {
       alert("ระบบชำระเงินยังไม่พร้อมใช้งาน กรุณารอสักครู่");
       return;
     }
-    window.OmiseCard.configure({
-      key: process.env.NEXT_PUBLIC_OMISE_PUBLIC_KEY,
-      currency: "thb",
-    });
-
     if (amount <= 0) return;
 
     window.OmiseCard.open({
@@ -101,7 +96,7 @@ export const useOmisePayment = (bookingId: number, amount: number) => {
     }
 
     window.OmiseCard.open({
-      amount: Math.round(amount * 100),
+      amount: Math.round(amount ),
       currency: "thb",
       sourceArray: ["promptpay"],
       defaultPaymentMethod: "promptpay",
@@ -112,8 +107,7 @@ export const useOmisePayment = (bookingId: number, amount: number) => {
       },
 
       onCreateSourceError: function (err: unknown) {
-        console.error("❌ SOURCE ERROR FULL:", err);
-        alert(JSON.stringify(err)); // 🔥 เอาให้เห็นเต็ม ๆ
+        console.error("❌ SOURCE ERROR:", err);
       }
     });
     console.log("🚀 [STEP 5] Popup Opened. Waiting for User to click Pay...");

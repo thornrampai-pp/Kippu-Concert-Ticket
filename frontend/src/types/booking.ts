@@ -1,4 +1,4 @@
-import { Seat } from './concert';
+import { Concert, Seat } from './concert';
 import { BookingStatus, PaymentStatus, InvoiceStatus } from './enums';
 
 export interface Booking {
@@ -12,6 +12,9 @@ export interface Booking {
   booking_items?: BookingItem[];
   payments?: Payment[];
   invoices?: Invoice[];
+  concert?: Concert;
+  
+
 }
 
 export interface BookingItem {

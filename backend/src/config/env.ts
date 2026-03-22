@@ -28,7 +28,7 @@ export const ENV: EnvConfig = {
 };
 
 export const omiseClient = Omise({
-  // publicKey: ENV.OMISE_PUBLIC_KEY,
+  publicKey: ENV.OMISE_PUBLIC_KEY,
   secretKey: ENV.OMISE_SECRET_KEY,
 });
 

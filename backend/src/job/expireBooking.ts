@@ -2,55 +2,62 @@ import cron from 'node-cron';
 import prisma from '../lib/prisma';
 import { SeatStatus, BookingStatus, InvoiceStatus } from '@prisma/client';
 
+// รันทุกๆ 1 นาที
 cron.schedule('* * * * *', async () => {
-  console.log('[Cron] Checking for expired bookings...');
+  const now = new Date();
 
   try {
-    // 1.  Booking ที่หมดอายุ 
-    
-    const expiredInvoices = await prisma.invoice.findMany({
+    // 1. หา Booking ที่ยัง PENDING และ Invoice หมดเวลาแล้ว
+    const expiredBookings = await prisma.booking.findMany({
       where: {
-        status: InvoiceStatus.UNPAID,
-        due_date: { lt: new Date() }
-      },
-      include: {
-        booking: {
-          include: {
-            booking_items: true
+        status: BookingStatus.PENDING,
+        invoices: {
+          some: {
+            status: InvoiceStatus.UNPAID,
+            due_date: { lt: now }
           }
         }
+      },
+      include: {
+        booking_items: true,
+        invoices: true
       }
     });
 
-    if (expiredInvoices.length === 0) return;
+    if (expiredBookings.length === 0) return;
 
-    // ล้างข้อมูลที่หมดอายุทั้งหมด
+    console.log(`[Cron] Found ${expiredBookings.length} expired bookings. Processing...`);
+
+    // 2. ใช้ Transaction เพื่อความปลอดภัยของข้อมูล
     await prisma.$transaction(async (tx) => {
-      for (const invoice of expiredInvoices) {
-        const bookingId = invoice.booking_id;
-        const seatIds = invoice.booking.booking_items.map(item => item.seat_id);
+      for (const booking of expiredBookings) {
+        const seatIds = booking.booking_items.map(item => item.seat_id);
+        const invoiceIds = booking.invoices.map(inv => inv.invoice_id);
 
-        // change seate status to available
+        // คืนสถานะที่นั่ง
         await tx.seat.updateMany({
           where: { seat_id: { in: seatIds } },
-          data: { status: SeatStatus.AVAILABLE, reserved_until: null }
+          data: {
+            status: SeatStatus.AVAILABLE,
+            reserved_until: null
+          }
         });
 
-        // change Booking status to EXPIRED
+        // อัปเดตสถานะการจอง
         await tx.booking.update({
-          where: { booking_id: bookingId },
+          where: { booking_id: booking.booking_id },
           data: { status: BookingStatus.EXPIRED }
         });
 
-        // change invoice status to  เป็น CANCELLED
-        await tx.invoice.update({
-          where: { invoice_id: invoice.invoice_id },
+        // อัปเดตสถานะ Invoice (เฉพาะใบที่ UNPAID)
+        await tx.invoice.updateMany({
+          where: { invoice_id: { in: invoiceIds }, status: InvoiceStatus.UNPAID },
           data: { status: InvoiceStatus.CANCELLED }
         });
       }
     });
 
-    console.log(`[Cron] Successfully cleared ${expiredInvoices.length} expired bookings.`);
+    console.log(`[Cron] Successfully cleared expired items.`);
   } catch (error) {
     console.error('[Cron Error]:', error);
   }
