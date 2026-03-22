@@ -31,10 +31,8 @@ export default function MyBookingsPage() {
 
   if (isLoading)
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-pulse text-emerald-500 font-medium">
-          กำลังดึงข้อมูลการจอง...
-        </div>
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
       </div>
     );
 
