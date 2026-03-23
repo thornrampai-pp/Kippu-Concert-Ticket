@@ -21,6 +21,8 @@ export interface Showtime {
   show_date: string;
   remaining_total: number;
 
+  availabilities?: SeatAvailability[];
+
   zones_availability: {
     zone_id: number;
     remaining: number;
@@ -48,25 +50,29 @@ export interface Zone {
 
   booked_seats?: number;
 
-  seats?: Seat[];
+  seats_master?: SeatMaster[];
+  availabilities?: SeatAvailability[];
 }
-
-export interface Seat {
+export 
+interface SeatMaster {
   seat_id: number;
-
   zone_id: number;
-  show_time_id: number;
-
   seat_number: string;
   row_label: string;
   column_num: number;
-  
-  status: SeatStatus;
-  reserved_until?: string | null;
-
   zone?: Zone;
 }
 
+export interface SeatAvailability {
+  availability_id: number;
+  showtime_id: number;
+  seat_id: number;
+  status: SeatStatus;
+  reserved_until?: string | null;
+
+  seat?: SeatMaster; 
+  showtime?: Showtime;
+}
 
 export interface CreateConcertInput {
   concert_name: string;
@@ -79,7 +85,7 @@ export interface CreateConcertInput {
   max_tickets_per_user: number;
 
   show_times: string[];
-  zones: ZoneInput[];
+  zones: ZoneUpdatePayload[];
 }
 
 
@@ -100,6 +106,17 @@ export interface ZoneInput {
 }
 
 
+export interface UpdateZoneSeatDetail {
+  zoneName?: string;
+  price?: number;
+  rowCount?: number;      
+  seatPerRow?: number;    
+  posX?: number;
+  posY?: number;
+  width?: number;
+  height?: number;
+  color?: string;
+}
 
 export interface SeatMap {
   pos_x: number;

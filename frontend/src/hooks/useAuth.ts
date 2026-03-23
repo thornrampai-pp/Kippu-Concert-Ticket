@@ -48,19 +48,23 @@ export const useAuth = () => {
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
 
-      // เรียกใช้ Service ที่เราสร้างไว้ข้างบน
-      await authService.loginWithGoogle(idToken);
-      const userData = await authService.getProfile();
-      setUser(userData);
+      // 1. เรียก signin และรับข้อมูล user กลับมาเลย (ไม่ต้องไป getProfile อีกรอบ)
+      const response = await authService.loginWithGoogle(idToken);
 
-      if (userData.role.role_id === 2){
-        router.push("/admin");
-      }else{
-        router.push("/");
+      const userData = response.data;
+
+      if (userData) {
+        setUser(userData);
+        // 2. เช็ค Role จากข้อมูลที่เพิ่งสร้าง/อัปเดตสดๆ
+        if (userData.role_id === 2) {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
       }
     } catch (err) {
       console.error("Login Error:", err);
-      alert("Login failed, please try again.");
+      alert("Login failed");
     } finally {
       setIsLoading(false);
     }

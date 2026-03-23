@@ -13,16 +13,17 @@ export const createPayment = async(req:Request,res:Response) =>{
 
   try{
     const bookingData = await prisma.booking.findFirst({
-      where:{
+      where: {
         booking_id: Number(bookingId),
         user_id: userId,
-        status:BookingStatus.PENDING
+        status: BookingStatus.PENDING
       },
-      include:{
+      include: {
         booking_items: {
-          include: { seat: true } // ✅ ควรมีข้อมูลที่นั่งติดไปด้วย
+
+          include: { availability: true }
         },
-        invoices:true,
+        invoices: true,
       }
     });
 
@@ -122,20 +123,13 @@ export const createPayment = async(req:Request,res:Response) =>{
   }
 
 }
-
 export const omiseWebhookHandler = async (req: Request, res: Response) => {
-  const { data, key } = req.body;
+  const { data } = req.body; // Omise Webhook ส่งข้อมูลมาใน body
 
   try {
-
-    if (data.object === "charge" && data.status === "successful") {  // check is compleate payment
-
+  
+    if (data.object === "charge" && data.status === "successful") {
       const charge = data;
-
-      if (charge.status !== "successful") { // if fail รอ corn จัดการ status ต่อ
-        return res.status(200).json({ success: true });
-      } 
-
       const bookingId = charge.metadata?.bookingId;
 
       if (!bookingId) {
@@ -143,7 +137,7 @@ export const omiseWebhookHandler = async (req: Request, res: Response) => {
         return res.status(200).json({ success: true });
       }
 
-      // กัน webhook ยิงซ้ำ
+      // 2. ป้องกันการทำงานซ้ำ (Idempotency Check)
       const existingPayment = await prisma.payment.findFirst({
         where: {
           transaction_id: charge.id,
@@ -155,36 +149,46 @@ export const omiseWebhookHandler = async (req: Request, res: Response) => {
         return res.status(200).json({ success: true });
       }
 
+      // 3. ดึงข้อมูล Booking พร้อม availability_id
       const bookingData = await prisma.booking.findFirst({
         where: {
           booking_id: Number(bookingId),
           status: BookingStatus.PENDING
         },
         include: {
-          booking_items: true,
+          // 🚩 แก้ไข: ต้องดึง availability มาด้วยเพื่อให้ฟังก์ชัน finalize ทำงานได้
+          booking_items: {
+            include: {
+              availability: true
+            }
+          },
           invoices: true
         }
       });
 
       if (!bookingData) {
+        console.warn(`[Webhook] Booking ${bookingId} not found or not in PENDING status`);
         return res.status(200).json({ success: true });
       }
 
+      // 4. รัน Transaction เพื่อจบการจอง
       await prisma.$transaction(async (tx) => {
+        // มั่นใจว่า finalizeSuccessfulPayment ของคุณใช้ availability_id ในการ update status แล้ว
         await finalizeSuccessfulPayment(tx, bookingData, charge, bookingData.user_id);
       });
 
       console.log(`[Webhook] Payment successful for Booking: ${bookingId}`);
     }
 
-    res.status(200).json({ success: true });
+    // Omise ต้องการ HTTP 200 เพื่อยืนยันว่าเราได้รับ Webhook แล้ว
+    return res.status(200).json({ success: true });
 
   } catch (e) {
     console.error("[Webhook Error]:", e);
-    res.status(500).send("Internal Server Error");
+    
+    return res.status(200).json({ success: false, message: "Internal logic error but webhook received" });
   }
 };
-
 
 export const getPaymentStatus = async (req: Request,res:Response) =>{
   const { bookingId } = req.params;
@@ -227,11 +231,9 @@ export const getPaymentStatus = async (req: Request,res:Response) =>{
   }
 }
 
-
 export const getReceipt = async (req: Request, res: Response) => {
   const { paymentId } = req.params;
   const userId = req.user?.uid;
-
 
   if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
@@ -240,7 +242,7 @@ export const getReceipt = async (req: Request, res: Response) => {
       where: {
         payment_id: Number(paymentId),
         user_id: userId,
-        status: PaymentStatus.SUCCESS // ต้องจ่ายสำเร็จแล้วเท่านั้นถึงจะมีใบเสร็จ
+        status: PaymentStatus.SUCCESS
       },
       include: {
         booking: {
@@ -248,13 +250,23 @@ export const getReceipt = async (req: Request, res: Response) => {
             concert: true,
             booking_items: {
               include: {
-                seat: {
-                  include: { zone: true }
+                // 🚩 แก้ไข: เปลี่ยนจาก seat เป็น availability 
+                availability: {
+                  include: {
+                    // ดึงข้อมูลเลขที่นั่งและโซน (ราคา/ชื่อโซน)
+                    seat: {
+                      include: { zone: true }
+                    },
+                    // 🚩 เพิ่มเติม: ดึงรอบการแสดงมาโชว์ในใบเสร็จ
+                    showtime: true
+                  }
                 }
               }
             }
           }
         },
+        // หมายเหตุ: ตรวจสอบใน Schema ว่า Payment มี relation กับ User หรือไม่ 
+        // ถ้าไม่มีให้เอาบรรทัดล่างนี้ออก หรือดึงผ่าน booking.user แทน
         user: true
       }
     });
@@ -263,13 +275,13 @@ export const getReceipt = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "ไม่พบใบเสร็จที่ต้องการ" });
     }
 
-    
     return res.status(200).json({
       success: true,
       data: payment
     });
 
   } catch (e: any) {
+    console.error("Get Receipt Error:", e);
     res.status(500).json({ success: false, message: "ไม่สามารถดึงข้อมูลใบเสร็จได้" });
   }
 };

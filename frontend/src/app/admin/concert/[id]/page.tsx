@@ -48,6 +48,11 @@ export default function EditConcertPage() {
         pos_y: z.pos_y,
         width: z.width,
         height: z.height,
+        seats:
+          z.seats_master?.map((sm) => ({
+            id: sm.seat_id,
+            name: sm.seat_number,
+          })) ?? [],
       })) ?? [],
   };
 

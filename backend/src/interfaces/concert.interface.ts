@@ -32,24 +32,28 @@ export interface CreateConcertBody {
   zones: ZoneInput[];
 }
 
-export interface SeatCreateInput {
+export interface SeatMasterCreateInput {
   zone_id: number;
-  showtime_id: number;
   seat_number: string;
-  status: SeatStatus;
   row_label: string;
   column_num: number;
 }
 
-export interface UpdateConcertBody {
-  concertName?: string;
-  concertDetail?: string;
-  location?: string;
-  isVisible?: boolean;
-  saleStartTime?: string; // รับเป็น ISO String จากนั้นค่อยแปลงเป็น Date
-  maxTicketsPerUser?: number;
+export interface SeatAvailabilityCreateInput {
+  showtime_id: number;
+  seat_id: number; // ID จาก SeatMaster
+  status: SeatStatus;
 }
 
+export interface UpdateConcertBody {
+  concert_name?: string; // ปรับให้ตรงกับ DB field name (Snake_case)
+  concert_detail?: string;
+  location?: string;
+  is_visible?: boolean;
+  sale_start_time?: string;
+  max_tickets_per_user?: number;
+  image_url?: string[];
+}
 export type UpdateParams = { id: string };
 
 
@@ -58,17 +62,14 @@ export interface UpdateZoneDetailBody{
   price?: number;
 }
 
-export interface UpdateZoneSeatDetial{
-  zoneName?: string;
+export interface UpdateZoneSeatDetail {
+  zone_name?: string;
   price?: number;
-  rowCount?: number;
-  seatPerRow?: number;
-
-  color: string;
-
-  posX?: number;
-  posY?: number;
+  row_count?: number;
+  seat_per_row?: number;
+  color?: string;
+  pos_x?: number;
+  pos_y?: number;
   width?: number;
   height?: number;
-
 }

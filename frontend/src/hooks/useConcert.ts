@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, useCallback, useEffect, useState ,} from "react";
-import { ApiError, Concert, CreateConcertInput, ImageFile, Seat, Zone, ZoneInput, ZoneUpdatePayload } from "../types";
+import { ApiError, Concert, CreateConcertInput, ImageFile, UpdateZoneSeatDetail, Zone, ZoneUpdatePayload } from "../types";
 import { concertService ,} from "../services/concertService";
 import { createClient } from "@supabase/supabase-js";
 import { ENV } from "../config/env";
@@ -247,34 +247,50 @@ export const useUpdateConcert = () => {
     try {
       setLoading(true);
 
-      //  อัปโหลดรูปไป Supabase (ถ้ามีรูปใหม่)
       let finalImageUrl = data.image_url;
       if (uploadFn) {
-        
-        // รวมรูปที่มีอยู่แล้ว + รูปที่เพิ่งอัปโหลดใหม่
         finalImageUrl = await uploadFn();
       }
 
-      //  อัปเดตข้อมูลคอนเสิร์ตหลัก (ชื่อ, สถานที่, วันขาย)
-      // ส่ง finalImageUrl ที่อัปเดตแล้วไปด้วย
-      await concertService.updateConcertInfo(id, { ...data, image_url: finalImageUrl });
+      // 🔥 1. ดึง zone เดิมจาก DB
+      const existingZones = await concertService.getZonesByConcert(id);
 
-      //  อัปเดตโซน
+      // 🔥 2. หา zone ที่ถูกลบ
+      const incomingZoneIds = data.zones
+        .filter(z => z.zone_id)
+        .map(z => z.zone_id);
+
+      const zonesToDelete = existingZones.filter(
+        (z: Zone) => !incomingZoneIds.includes(z.zone_id)
+      );
+
+      // 🔥 3. อัปเดต concert
+      await concertService.updateConcertInfo(id, {
+        ...data,
+        image_url: finalImageUrl
+      });
+
+      // 🔥 4. update + add
       const zoneActions = data.zones.map((zone: ZoneUpdatePayload) => {
         if (zone.zone_id) {
-          // โซนเดิม 
           return concertService.updateZone(zone.zone_id, zone);
         } else {
-          // โซนใหม่ 
           return concertService.addZone(id, zone);
         }
       });
 
-      await Promise.all(zoneActions);
+      // 🔥 5. delete
+      const deleteActions = zonesToDelete.map((zone: Zone) =>
+        concertService.deleteZone(zone.zone_id)
+      );
 
-      // alert("บันทึกข้อมูลสำเร็จ");
+      await Promise.all([
+        ...zoneActions,
+        ...deleteActions
+      ]);
+
       router.push("/admin");
-      router.refresh(); // เพื่อให้หน้า Admin โหลดข้อมูลใหม่ล่าสุด
+      router.refresh();
 
     } catch (err) {
       console.error("Update Error:", err);
@@ -286,6 +302,7 @@ export const useUpdateConcert = () => {
 
   return { handleUpdateConcert, loading };
 };
+
 export const useConcertById = (id: string | undefined) => {
   const [concert, setConcert] = useState<Concert | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -342,7 +359,7 @@ export const useZone = () => {
   }, []);
 
   // ฟังก์ชันสำหรับ Admin (แก้ Parameter ให้ตรงกับที่จะส่งไป)
-  const updateZoneSeat = async (zoneId: number, data: Partial<Zone>) => {
+  const updateZoneSeat = async (zoneId: number, data: Partial<UpdateZoneSeatDetail>) => {
     try {
       setIsLoading(true);
       const result = await concertService.updateZoneSeat(zoneId, data);

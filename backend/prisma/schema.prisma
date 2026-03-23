@@ -71,44 +71,71 @@ model Showtime {
   show_date   DateTime
   concert_id  Int
   concert     Concert  @relation(fields: [concert_id], references: [concert_id])
-  seats       Seat[]
+  availabilities SeatAvailability[]
 }
-
 model Zone {
-  zone_id      Int     @id @default(autoincrement())
+  zone_id      Int          @id @default(autoincrement())
   zone_name    String
-  price        Decimal @db.Decimal(10, 2)
-  color       String
-  row_count    Int     @default(0) // จำนวนแถวทั้งหมดในโซนนี้
-  seat_per_row Int     @default(0) // จำนวนที่นั่งต่อ 1 แถว
+  price        Decimal      @db.Decimal(10, 2)
+  color        String
+  row_count    Int          @default(0)
+  seat_per_row Int          @default(0)
   total_seats  Int
   concert_id   Int
+  pos_x        Int          @default(0)
+  pos_y        Int          @default(0)
+  width        Int          @default(120)
+  height       Int          @default(80)
 
-  pos_x  Int @default(0)
-  pos_y  Int @default(0)
-  width  Int @default(120)
-  height Int @default(80)
-
-  concert Concert @relation(fields: [concert_id], references: [concert_id], onDelete: Cascade)
-  seats   Seat[]
+  concert      Concert      @relation(fields: [concert_id], references: [concert_id], onDelete: Cascade)
+  
+ 
+  seats_master SeatMaster[] 
 }
 
-model Seat {
-  seat_id        Int           @id @default(autoincrement())
-  zone_id        Int
-  showtime_id    Int
-  showtime       Showtime      @relation(fields: [showtime_id], references: [showtime_id], onDelete: Cascade)
-  zone           Zone          @relation(fields: [zone_id], references: [zone_id], onDelete: Cascade)
-  seat_number    String
-  row_label      String // ✅ เช่น "A" (เอาไว้จัดกลุ่ม/แบ่งแถว)
-  column_num     Int // ✅ เช่น 1 (เอาไว้เรียงลำดับซ้ายไปขวาในแถวนั้น)
-  status         SeatStatus    @default(AVAILABLE)
-  reserved_until DateTime?
-  booking_items  BookingItem[]
+model SeatMaster {
+  seat_id      Int                @id @default(autoincrement())
+  zone_id      Int
+  zone         Zone               @relation(fields: [zone_id], references: [zone_id], onDelete: Cascade)
+  seat_number  String
+  row_label    String
+  column_num   Int
+  
+  // 🚩 เชื่อมไปยังสถานะรายรอบ
+  availabilities SeatAvailability[]
 
-  // ป้องกันเลขที่นั่งซ้ำกันในโซนเดียวกัน
-  @@unique([zone_id, seat_number, showtime_id])
-  @@index([showtime_id, zone_id, row_label, column_num])
+  @@unique([zone_id, seat_number])
+}
+//สถานะที่นั่งแยกตามรอบ
+model SeatAvailability {
+  availability_id Int           @id @default(autoincrement())
+  showtime_id     Int
+  showtime        Showtime      @relation(fields: [showtime_id], references: [showtime_id], onDelete: Cascade)
+  seat_id         Int
+  seat            SeatMaster    @relation(fields: [seat_id], references: [seat_id], onDelete: Cascade)
+  status          SeatStatus    @default(AVAILABLE)
+  reserved_until  DateTime?
+  
+  // 🚩 เชื่อมกับรายการจอง
+  booking_items   BookingItem[]
+
+  @@unique([showtime_id, seat_id])
+  @@index([showtime_id, status])
+}
+
+// 4. แก้ไข BookingItem (ให้ชี้ไปที่ Availability แทน Seat)
+model BookingItem {
+  booking_item_id Int              @id @default(autoincrement())
+  booking_id      Int
+  booking         Booking          @relation(fields: [booking_id], references: [booking_id])
+  
+  // 🚩 แก้ไข: ชี้มาที่ SeatAvailability
+  availability_id Int
+  availability    SeatAvailability @relation(fields: [availability_id], references: [availability_id])
+
+  price           Decimal          @db.Decimal(10, 2)
+
+  @@unique([booking_id, availability_id])
 }
 
 model Booking {
@@ -125,18 +152,6 @@ model Booking {
   invoices      Invoice[]
 }
 
-model BookingItem {
-  booking_item_id Int     @id @default(autoincrement())
-  booking_id      Int
-  booking         Booking @relation(fields: [booking_id], references: [booking_id])
-  seat_id         Int
-  seat            Seat    @relation(fields: [seat_id], references: [seat_id])
-
-  price           Decimal @db.Decimal(10, 2)
-
-  // ป้องกันไม่ให้ที่นั่งตัวเดิมถูกผูกกับการจองใบเดิมซ้ำ (Data Integrity)
-  @@unique([booking_id, seat_id])
-}
 
 model Payment {
   payment_id     Int           @id @default(autoincrement())

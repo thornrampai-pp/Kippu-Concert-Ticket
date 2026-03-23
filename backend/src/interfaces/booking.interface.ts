@@ -1,6 +1,6 @@
 export interface CreateBookingBody{
   concertId: number,
-  seatIds: number[]
+  availabilityIds: number[];
 }
 
 export interface InputParams{

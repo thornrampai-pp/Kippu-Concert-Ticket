@@ -39,15 +39,25 @@ export default function ConcertEditorContent({
  
   const onSubmit = async () => {
     try {
-      if (isEdit) {
-        if (!id) {
-          console.error("Missing id");
-          return;
-        }
+      
+      const dataToSubmit = {
+        ...concertData,
+        sale_start_time: new Date(concertData.sale_start_time).toISOString(),
+        show_times: concertData.show_times.map((t) =>
+          new Date(t).toISOString(),
+        ),
+      };
 
-        await handleUpdateConcert(id, concertData, imageUpload.uploadAllImages);
+      if (isEdit) {
+        if (!id) return;
+       
+        await handleUpdateConcert(
+          id,
+          dataToSubmit,
+          imageUpload.uploadAllImages,
+        );
       } else {
-        await handleCreateConcert(concertData, imageUpload.uploadAllImages);
+        await handleCreateConcert(dataToSubmit, imageUpload.uploadAllImages);
       }
     } catch (err) {
       console.error("Submit error:", err);

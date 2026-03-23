@@ -53,6 +53,7 @@ const ZonesForm = ({ zones, setConcertData,isEdit= false}: Props) => {
   };
   const removeZone = (index: number) => {
     setConcertData((prev) => ({
+      
       ...prev,
       zones: prev.zones.filter((_, i) => i !== index),
     }));

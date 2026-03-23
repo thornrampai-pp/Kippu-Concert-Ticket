@@ -23,10 +23,12 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const auth = useAuth(); // ดึง { user, isLoading, loginGoogle } มาจาก useAuth
 
-  // 2. ใช้ useMemo เพื่อคำนวณ isAdmin
-  // มันจะคำนวณใหม่เฉพาะตอนที่ auth.user เปลี่ยนเท่านั้น ช่วยให้แอปฯ ลื่นไหล
+  
   const isAdmin = useMemo(() => {
-    return auth.user?.role?.role_id === 2;
+    if (!auth.user) return false;
+
+    // เช็คทั้งจาก role_id โดยตรง และจาก nested object role
+    return auth.user.role_id === 2 || auth.user.role?.role_id === 2;
   }, [auth.user]);
 
   return (

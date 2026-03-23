@@ -26,17 +26,20 @@ const ConfirmBookingPage = () => {
     setIsSubmitting(true);
 
     try {
+      const availabilityIds = bookingData.seats.map(
+        (s) => s.availabilityId || s.availabilityId,
+      );
       // 🚀 ยิง API createBooking ที่คุณเขียนไว้ใน Backend
       const res = await bookingService.createBooking(
         bookingData.concertId,
-        bookingData.seats.map((s: { id: number; name: string }) => s.id),
+        availabilityIds,
       );
 
       if (res.success) {
         // ล้าง Session เมื่อจองสำเร็จ (เพื่อกันการกดย้อนกลับมาจองซ้ำ)
         clearBooking();
         // ส่งไปหน้า Payment พร้อม ID การจองที่ได้จาก Backend
-        router.push(`confirm/payment/${res.data.booking_id}`);
+        router.push(`/confirm/payment/${res.data.booking_id}`);
       }
     } catch (err: unknown) {
       const error = err as ApiError;

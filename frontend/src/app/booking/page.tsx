@@ -7,20 +7,27 @@ import {
   Clock,
   MapPin,
   Armchair,
-  ChevronRight,
 } from "lucide-react";
 import { useMyBookings } from "@/src/hooks/useMybookings";
 import { BookingItem } from "@/src/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function MyBookingsPage() {
   const { bookings, isLoading, hasBookings } = useMyBookings();
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
 
   // ฟังก์ชันสำหรับสลับการเปิดปิด
-  const toggleMenu = (id: number) => {
+  const toggleMenu = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation(); // 🚩 หยุด Event ไม่ให้วิ่งไปถึง window.addEventListener
     setActiveMenu(activeMenu === id ? null : id);
   };
+  useEffect(() => {
+    const closeMenu = () => setActiveMenu(null);
+    if (activeMenu) {
+      window.addEventListener("click", closeMenu);
+    }
+    return () => window.removeEventListener("click", closeMenu);
+  }, [activeMenu]);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -90,9 +97,27 @@ export default function MyBookingsPage() {
                     </div>
 
                     <div>
-                      <h2 className="text-2xl font-bold group-hover:text-emerald-400 transition-colors">
-                        {booking.concert?.concert_name || "Concert Name"}
-                      </h2>
+                      <div className="flex flex-row items-center gap-3">
+                        <h2 className="text-2xl font-bold group-hover:text-emerald-400 transition-colors">
+                          {booking.concert?.concert_name || "Concert Name"}
+                        </h2>
+                        <h3>
+                          <h3 className="text-emerald-400 font-mono text-sm bg-emerald-500/10 px-2 py-0.5 rounded">
+                            <Clock size={14} className="inline mr-1" />
+                            {booking.booking_items?.[0]?.availability?.showtime
+                              ?.show_date
+                              ? new Date(
+                                  booking.booking_items[0].availability.showtime
+                                    .show_date,
+                                ).toLocaleString("th-TH", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                })
+                              : "N/A"}
+                          </h3>
+                        </h3>
+                      </div>
+
                       <div className="flex flex-wrap gap-y-2 gap-x-6 mt-3 text-zinc-400">
                         <div className="flex items-center gap-2 text-sm">
                           <Calendar size={16} className="text-emerald-500" />
@@ -117,10 +142,12 @@ export default function MyBookingsPage() {
                         >
                           <Armchair size={12} className="text-zinc-500" />
                           <span className="text-zinc-300 font-medium">
-                            Zone {item.seat?.zone?.zone_name}
+                            {/* 🚩 แก้ไข Path ตรงนี้ครับ */}
+                            Zone {item.availability?.seat?.zone?.zone_name}
                           </span>
                           <span className="text-white font-bold">
-                            {item.seat?.seat_number}
+                            {/* 🚩 แก้ไข Path ตรงนี้ครับ */}
+                            {item.availability?.seat?.seat_number}
                           </span>
                         </div>
                       ))}
@@ -148,7 +175,7 @@ export default function MyBookingsPage() {
                     ) : (
                       <div className="relative">
                         <button
-                          onClick={() => toggleMenu(booking.booking_id)}
+                          onClick={(e) => toggleMenu(e, booking.booking_id)}
                           className="flex items-center justify-center p-4 bg-zinc-800 text-white rounded-2xl font-bold hover:bg-zinc-700 transition-all border border-zinc-700 active:scale-95"
                         >
                           <div className="flex gap-1">

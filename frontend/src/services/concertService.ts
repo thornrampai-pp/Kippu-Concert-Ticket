@@ -1,5 +1,5 @@
 import axiosInstance from "../lib/axios";
-import { Concert, CreateConcertInput, ApiResponse, ZoneInput, Seat, Zone } from "../types";
+import { Concert, CreateConcertInput, ApiResponse, ZoneInput, Zone, UpdateZoneSeatDetail } from "../types";
 export const concertService = {
   getAllConcerts: async (): Promise<Concert[]> => {
     const response = await axiosInstance.get<ApiResponse<Concert[]>>("/concert/all");
@@ -52,8 +52,8 @@ export const concertService = {
       price: zoneData.price,
       rowCount: zoneData.row_count,
       seatPerRow: zoneData.seat_per_row,
-      posX: zoneData.pos_x,
-      posY: zoneData.pos_y,
+      pos_x: zoneData.pos_x,
+      pos_y: zoneData.pos_y,
       width: zoneData.width,
       height: zoneData.height,
       color: zoneData.color
@@ -69,8 +69,18 @@ export const concertService = {
     return await axiosInstance.post(`/zone/addzone/${concertId}`, zoneData);
   },
 
-  updateZoneSeat: async (zoneId: number, data: Partial<Seat>) => {
+  updateZoneSeat: async (zoneId: number, data: Partial<UpdateZoneSeatDetail>) => {
     const res = await axiosInstance.post(`/zones/updateseat/${zoneId}`, data);
     return res.data;
-  }
+  },
+  deleteZone: async (zoneId: number) => {
+    const response = await axiosInstance.delete(`/zone/delete/${zoneId}`);
+    return response.data;
+  },
+  getZonesByConcert: async (id: string): Promise<Zone[]> => {
+    const res = await axiosInstance.get<ApiResponse<Zone[]>>(
+      `/zone/allzone/${id}`
+    );
+    return res.data.data;
+  },
 };

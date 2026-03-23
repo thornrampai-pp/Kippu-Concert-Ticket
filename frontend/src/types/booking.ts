@@ -1,4 +1,4 @@
-import { Concert, Seat } from './concert';
+import { Concert, SeatAvailability } from './concert';
 import { BookingStatus, PaymentStatus, InvoiceStatus } from './enums';
 
 export interface Booking {
@@ -20,9 +20,10 @@ export interface Booking {
 export interface BookingItem {
   booking_item_id: number;
   booking_id: number;
-  seat_id: number;
+  availability_id: number;
 
-  seat?: Seat;
+  availability?: SeatAvailability;
+  price: string | number;
 }
 
 export interface Payment {
@@ -67,7 +68,7 @@ export interface PendingBooking {
   price: number;
   // เก็บทั้ง ID (ส่ง Backend) และ Number (โชว์ UI)
   seats: {
-    id: number;     // seat_id สำหรับ Prisma
+    availabilityId: number;     // seat_id สำหรับ Prisma
     name: string;   // seat_number สำหรับแสดงผล เช่น "A1"
   }[];
   totalPrice: number;

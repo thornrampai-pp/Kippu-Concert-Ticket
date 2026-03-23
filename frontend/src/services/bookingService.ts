@@ -3,11 +3,11 @@ import { ApiError } from "../types";
 
 export const bookingService = {
   // สร้างการจองใหม่
-  createBooking: async (concertId: number, seatIds: number[]) => {
+  createBooking: async (concertId: number, availabilityIds: number[]) => {
     try {
       const response = await axiosInstance.post("booking/create", {
         concertId,
-        seatIds,
+        availabilityIds,
       });
       return response.data; // จะได้ { success: true, data: result }
     } catch (err: unknown) {

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma";
-import { CreateConcertBody, SeatCreateInput, UpdateConcertBody, UpdateParams } from "../interfaces/concert.interface";
+import { CreateConcertBody, UpdateConcertBody, UpdateParams } from "../interfaces/concert.interface";
 import { SeatStatus } from "@prisma/client";
 import { runInNewContext } from "node:vm";
 
@@ -65,11 +65,9 @@ export const getAllConcert = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getAdminConcerts = async (req: Request, res: Response) => {
   try {
-    // Admin จะไม่ใช้ Filter is_visible หรือเช็ควันที่ (gte: dateNow)
-    // เพื่อให้เห็นคอนเสิร์ตทั้งหมดที่เคยสร้างไว้
+    // Admin จะเห็นคอนเสิร์ตทั้งหมด
     const concertsData = await prisma.concert.findMany({
       include: {
         show_times: {
@@ -77,17 +75,17 @@ export const getAdminConcerts = async (req: Request, res: Response) => {
             show_date: "asc",
           },
           include: {
+            // 🚩 แก้ไข: เปลี่ยนจาก seats เป็น availabilities
             _count: {
-              select: { seats: true } // นับจำนวนที่นั่งทั้งหมดในแต่ละรอบ
+              select: { availabilities: true }
             }
           }
         },
         _count: {
-          select: { zones: true } // นับจำนวนโซนที่มีในคอนเสิร์ตนี้
+          select: { zones: true }
         }
       },
       orderBy: {
-        // เรียงตามวันที่สร้างล่าสุดขึ้นก่อน (Admin มักจะอยากดูงานล่าสุด)
         concert_id: "desc",
       },
     });
@@ -99,13 +97,14 @@ export const getAdminConcerts = async (req: Request, res: Response) => {
       image_url: concert.image_url,
       location: concert.location,
       sale_start_time: concert.sale_start_time,
-      is_visible: concert.is_visible, // Admin จะได้เช็คได้ว่าตัวไหนเปิด/ปิดอยู่
+      is_visible: concert.is_visible,
       max_tickets_per_user: concert.max_tickets_per_user,
       zone_count: concert._count.zones,
       show_times: concert.show_times.map((st) => ({
         show_time_id: st.showtime_id,
         show_date: st.show_date,
-        total_seats: st._count.seats, // ข้อมูลเพิ่มเติมสำหรับ Admin
+        // 🚩 แก้ไข: ดึงค่าจาก availabilities ที่เรานับไว้
+        total_seats: st._count.availabilities,
       })),
     }));
 
@@ -121,6 +120,7 @@ export const getAdminConcerts = async (req: Request, res: Response) => {
   }
 };
 
+
 export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcertBody>, res: Response) => {
   const { id } = req.params;
   try {
@@ -130,38 +130,36 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
       },
       include: {
         show_times: {
-          orderBy: {
-            show_date: "asc",
-          },
+          orderBy: { show_date: "asc" },
           include: {
-            seats: {
+            // 🚩 1. ดึงเฉพาะรายการที่ AVAILABLE และต้องดึงผ่าน SeatMaster เพื่อเอา zone_id
+            availabilities: {
               where: { status: SeatStatus.AVAILABLE },
-              select: { zone_id: true }
+              select: {
+                seat: {
+                  select: { zone_id: true }
+                }
+              }
             },
+            // 🚩 2. นับจำนวนที่ว่างรวมของรอบนั้นๆ
             _count: {
               select: {
-                seats: {
-                  where: { status: SeatStatus.AVAILABLE } // นับเฉพาะที่ว่างในรอบนั้น
+                availabilities: {
+                  where: { status: SeatStatus.AVAILABLE }
                 }
               }
             }
           }
         },
-        zones: true // ข้อมูลพื้นฐานของโซน (ราคา, พิกัด) ดึงแยกไว้แบบเดิมได้
+        zones: true
       },
     });
 
-    // 1. เช็คว่ามีข้อมูลไหม
-    if (!concert) {
+    if (!concert || !concert.is_visible) {
       return res.status(404).json({ success: false, message: "Concert not found" });
     }
 
-    // 2. เช็คว่าถูกสั่งซ่อนไว้หรือไม่
-    if (!concert.is_visible) {
-      return res.status(403).json({ success: false, message: "Concert not found" });
-    }
-
-    // 3. Mapping ข้อมูลให้ชื่อ Field ตรงกับ getAllConcert
+    // 🚩 3. Mapping ข้อมูลใหม่
     const formattedData = {
       concert_id: concert.concert_id,
       concert_name: concert.concert_name,
@@ -171,19 +169,20 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
       sale_start_time: concert.sale_start_time,
       is_visible: concert.is_visible,
       max_tickets_per_user: concert.max_tickets_per_user,
-      // แสดง List รอบเวลาทั้งหมดที่มีในฐานข้อมูล
+
       show_times: concert.show_times.map((st) => {
-        // 1. สร้าง Map เพื่อนับว่าในรอบนี้ แต่ละ zone_id เหลือที่นั่งเท่าไหร่
-        const availabilityMap = st.seats.reduce((acc: Record<number, number>, seat) => {
-          acc[seat.zone_id] = (acc[seat.zone_id] || 0) + 1;
+        // วนลูปนับว่าแต่ละ zone_id มีที่นั่งว่าง (from availabilities) เท่าไหร่
+        const availabilityMap = st.availabilities.reduce((acc: Record<number, number>, curr) => {
+          const zId = curr.seat.zone_id;
+          acc[zId] = (acc[zId] || 0) + 1;
           return acc;
         }, {});
 
         return {
           showtime_id: st.showtime_id,
           show_date: st.show_date,
-          remaining_total: st._count.seats,
-          // ✅ 2. เพิ่มฟิลด์นี้ เพื่อให้ Frontend รู้ว่าโซนไหนเหลือกี่ที่ในรอบนี้
+          remaining_total: st._count.availabilities, // จำนวนที่ว่างรวมทั้งรอบ
+          // ส่งข้อมูลที่ว่างแยกตามโซนให้ Frontend ไปวาดกราฟิกหรือแสดงรายการ
           zones_availability: concert.zones.map(z => ({
             zone_id: z.zone_id,
             remaining: availabilityMap[z.zone_id] || 0
@@ -191,7 +190,6 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
         };
       }),
       zones: concert.zones
-    
     };
 
     return res.status(200).json({
@@ -208,54 +206,46 @@ export const getConcertById = async (req: Request<UpdateParams, {}, UpdateConcer
 
 
 
-
-
 // CREATE
-
 export const createConcert = async (
   req: Request<{}, {}, CreateConcertBody>,
   res: Response
 ) => {
-  // 
   const {
-    concert_name,    
-    concert_detail,  
+    concert_name,
+    concert_detail,
     location,
     image_url,
-    is_visible,     
-    show_times,     
+    is_visible,
+    show_times,
     sale_start_time,
-    max_tickets_per_user, 
+    max_tickets_per_user,
     zones
   } = req.body;
 
   try {
     const concert = await prisma.$transaction(async (tx) => {
 
-      // 2. Mapping เข้า Prisma (ฝั่งซ้ายคือชื่อใน DB, ฝั่งขวาคือค่าจากตัวแปร)
+      // 1. สร้าง Concert, Showtimes และ Zones
       const newConcert = await tx.concert.create({
         data: {
-          concert_name: concert_name,          // Map: concertName -> concert_name
-          concert_detail: concert_detail || '',      // Map: concertDetail -> concert_detail
-          location: location,
-          image_url: image_url,
-          is_visible: is_visible ?? true,      // Map: isVisible -> is_visible
+          concert_name,
+          concert_detail: concert_detail || '',
+          location,
+          image_url,
+          is_visible: is_visible ?? true,
           sale_start_time: new Date(sale_start_time),
           max_tickets_per_user: max_tickets_per_user ?? 2,
-
-          // สร้าง Showtimes หลายรอบ
           show_times: {
             create: show_times.map(date => ({
               show_date: new Date(date)
             }))
           },
-
-          // สร้าง Zones
           zones: {
             create: zones.map((z) => ({
-              zone_name: z.zone_name,          // Map: zoneName -> zone_name
+              zone_name: z.zone_name,
               price: z.price,
-              total_seats: z.row_count * z.seat_per_row,      // Map: totalSeats -> total_seats
+              total_seats: z.row_count * z.seat_per_row,
               row_count: z.row_count,
               seat_per_row: z.seat_per_row,
               color: z.color,
@@ -272,64 +262,78 @@ export const createConcert = async (
         }
       });
 
-      // 3. STEP 2: วนลูปสร้างที่นั่ง (Seats) แยกตามรอบและโซน
-      const zoneMap = new Map(
-        newConcert.zones.map((z) => [z.zone_name, z.zone_id])
-      );
+      // --- ฟังก์ชัน Helper สำหรับสร้าง Label แถว ---
+      const getRowLabel = (n: number): string => {
+        let label = "";
+        while (n > 0) {
+          let m = (n - 1) % 26;
+          label = String.fromCharCode(65 + m) + label;
+          n = Math.floor((n - m) / 26);
+        }
+        return label;
+      };
 
-      for (const show of newConcert.show_times) {
-        // สร้าง Buffer ขนาดใหญ่สำหรับเก็บที่นั่ง "ทุกโซน" ในรอบการแสดงนี้
-        const allSeatsInShow: any[] = [];
+      // 2. สร้าง SeatMaster (ข้อมูลกายภาพที่นั่ง) - สร้างแค่ "ชุดเดียว" ต่อคอนเสิร์ต
+      const seatMasterData: any[] = [];
 
-        for (const zoneInput of zones) {
-          const createdZoneId = zoneMap.get(zoneInput.zone_name);
-          if (!createdZoneId) continue;
+      for (const zone of newConcert.zones) {
+        // หาข้อมูล input ของโซนนั้นเพื่อเอา row_count / seat_per_row
+        const zoneInput = zones.find(z => z.zone_name === zone.zone_name);
+        if (!zoneInput) continue;
 
-          const getRowLabel = (n: number): string => {
-            let label = "";
-            while (n > 0) {
-              let m = (n - 1) % 26;
-              label = String.fromCharCode(65 + m) + label; // 65 คือ 'A'
-              n = Math.floor((n - m) / 26);
-            }
-            return label;
-          };
-
-          for (let r = 1; r <= zoneInput.row_count; r++) {
-            const rowLabel = getRowLabel(r);
-            for (let s = 1; s <= zoneInput.seat_per_row; s++) {
-              allSeatsInShow.push({
-                zone_id: createdZoneId,
-                showtime_id: show.showtime_id,
-                seat_number: `${rowLabel}${s}`,
-                row_label: rowLabel,
-                column_num: s,
-                status: SeatStatus.AVAILABLE,
-              });
-            }
+        for (let r = 1; r <= zone.row_count; r++) {
+          const rowLabel = getRowLabel(r);
+          for (let s = 1; s <= zone.seat_per_row; s++) {
+            seatMasterData.push({
+              zone_id: zone.zone_id,
+              seat_number: `${rowLabel}${s}`,
+              row_label: rowLabel,
+              column_num: s,
+            });
           }
         }
+      }
 
-        // ยิง Query ครั้งเดียวต่อรอบการแสดง (เช่น รอบละ 2,000 - 5,000 seats)
-        if (allSeatsInShow.length > 0) {
-          await tx.seat.createMany({
-            data: allSeatsInShow,
-            skipDuplicates: true, // ป้องกัน Error ถ้ามีการรันซ้ำ
+      // บันทึกข้อมูลผังที่นั่งหลักทั้งหมดลง DB
+      await tx.seatMaster.createMany({
+        data: seatMasterData
+      });
+
+      // 3. สร้าง SeatAvailability (สถานะการขาย) - แยกตามรอบการแสดง
+      // ดึง SeatMaster IDs ที่เพิ่งสร้างขึ้นมา
+      const createdMasters = await tx.seatMaster.findMany({
+        where: { zone: { concert_id: newConcert.concert_id } },
+        select: { seat_id: true }
+      });
+
+      for (const show of newConcert.show_times) {
+        const availabilityData = createdMasters.map(m => ({
+          showtime_id: show.showtime_id,
+          seat_id: m.seat_id,
+          status: SeatStatus.AVAILABLE
+        }));
+
+        // ใช้ Chunking (แบ่งทีละ 1,000) เพื่อป้องกัน Error กรณีที่นั่งเยอะเกินไป
+        for (let i = 0; i < availabilityData.length; i += 1000) {
+          await tx.seatAvailability.createMany({
+            data: availabilityData.slice(i, i + 1000)
           });
         }
       }
 
       return newConcert;
+    }, {
+      timeout: 30000 // เพิ่ม timeout เป็น 30 วินาที เพราะต้องเขียนข้อมูลเยอะ
     });
 
     res.status(201).json({
       success: true,
-      message: "Create concert successfully",
+      message: "Create concert with master seats and availability successfully",
       data: concert
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Create Concert Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
