@@ -1,43 +1,26 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { bookingService } from "@/src/services/bookingService";
+import { useParams,  } from "next/navigation";
 import { useOmisePayment } from "@/src/hooks/usePayment";
-import { Booking } from "@/src/types";
+import { useBookingStatus } from "@/src/hooks/useBooking";
 
 export default function PaymentPage() {
   const { id } = useParams();
-  const router = useRouter();
-  const [booking, setBooking] = useState<Booking | null>(null);
 
-  // 1. ดึงข้อมูลการจอง
-  useEffect(() => {
-    const fetchBooking = async () => {
-      try {
-        const data = await bookingService.getBookingById(Number(id));
-        setBooking(data);
-      } catch (err) {
-        router.push("/");
-      }
-    };
-    fetchBooking();
-  }, [id, router]);
+  const { booking, loading } = useBookingStatus(Number(id));
 
-  // 2. เรียกใช้ Hook (ส่ง ID และยอดเงินเข้าไป)
-  // ใช้ค่า 0 เป็นค่าเริ่มต้นจนกว่า booking จะโหลดเสร็จ
-  const { handleCreditCard, handlePromptPay, isProcessing } = useOmisePayment(
+  const { handleCreditCard, isProcessing } = useOmisePayment(
     Number(id),
     booking?.total_price || 0,
   );
 
-  if (!booking)
+  if (loading || !booking) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="animate-pulse">กำลังดึงข้อมูลการจอง...</div>
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
       </div>
     );
-
+  }
+  
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center p-6">
       <div className="max-w-md w-full bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-2xl">
@@ -57,7 +40,7 @@ export default function PaymentPage() {
             disabled={isProcessing}
             className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
           >
-            {isProcessing ? "กำลังประมวลผล..." : "💳 บัตรเครดิต / เดบิต"}
+            {isProcessing ? "process..." : "💳 บัตรเครดิต / เดบิต"}
           </button>
 
           {/* <button
