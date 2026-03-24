@@ -11,6 +11,7 @@ import {
 import { useMyBookings } from "@/src/hooks/useMybookings";
 import { BookingItem } from "@/src/types";
 import { useEffect, useState } from "react";
+import Header from "@/src/components/Header";
 
 export default function MyBookingsPage() {
   const { bookings, isLoading, hasBookings } = useMyBookings();
@@ -51,8 +52,8 @@ export default function MyBookingsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-20">
+      <Header />
       <div className="max-w-5xl mx-auto px-6 py-12">
-        {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-extrabold tracking-tight flex items-center gap-4">
             <div className="p-3 bg-emerald-500/10 rounded-2xl">
@@ -101,20 +102,19 @@ export default function MyBookingsPage() {
                         <h2 className="text-2xl font-bold group-hover:text-emerald-400 transition-colors">
                           {booking.concert?.concert_name || "Concert Name"}
                         </h2>
-                        <h3>
-                          <h3 className="text-emerald-400 font-mono text-sm bg-emerald-500/10 px-2 py-0.5 rounded">
-                            <Clock size={14} className="inline mr-1" />
-                            {booking.booking_items?.[0]?.availability?.showtime
-                              ?.show_date
-                              ? new Date(
-                                  booking.booking_items[0].availability.showtime
-                                    .show_date,
-                                ).toLocaleString("th-TH", {
-                                  dateStyle: "short",
-                                  timeStyle: "short",
-                                })
-                              : "N/A"}
-                          </h3>
+
+                        <h3 className="text-emerald-400 font-mono text-sm bg-emerald-500/10 px-2 py-0.5 rounded">
+                          <Clock size={14} className="inline mr-1" />
+                          {booking.booking_items?.[0]?.availability?.showtime
+                            ?.show_date
+                            ? new Date(
+                                booking.booking_items[0].availability.showtime
+                                  .show_date,
+                              ).toLocaleString("th-TH", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              })
+                            : "N/A"}
                         </h3>
                       </div>
 
@@ -142,11 +142,9 @@ export default function MyBookingsPage() {
                         >
                           <Armchair size={12} className="text-zinc-500" />
                           <span className="text-zinc-300 font-medium">
-                            {/* 🚩 แก้ไข Path ตรงนี้ครับ */}
                             Zone {item.availability?.seat?.zone?.zone_name}
                           </span>
                           <span className="text-white font-bold">
-                            {/* 🚩 แก้ไข Path ตรงนี้ครับ */}
                             {item.availability?.seat?.seat_number}
                           </span>
                         </div>
@@ -167,7 +165,7 @@ export default function MyBookingsPage() {
 
                     {booking.status === "PENDING" ? (
                       <Link
-                        href={`/payment/${booking.booking_id}`}
+                        href={`/confirm/payment/${booking.booking_id}`}
                         className="flex items-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-black hover:bg-emerald-400 transition-all active:scale-95 shadow-lg shadow-white/5"
                       >
                         PAY NOW <Clock size={20} />
@@ -186,20 +184,12 @@ export default function MyBookingsPage() {
                         </button>
                         {activeMenu === booking.booking_id && (
                           <div className="absolute right-0 bottom-full mb-2 lg:bottom-auto lg:top-full lg:mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <Link
-                              href={`/booking/${booking.booking_id}/status`}
-                              className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
-                            >
-                              <Ticket size={16} className="text-emerald-500" />
-                              ดูรายละเอียดตั๋ว
-                            </Link>
-
                             {/* เงื่อนไขแสดง Invoice */}
                             <button
                               onClick={() =>
                                 window.open(
-                                  `/api/invoice/${booking.booking_id}`,
-                                  "_blank",
+                                  `/invoice/${booking.booking_id}`,
+                                  
                                 )
                               }
                               className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors border-t border-zinc-800/50"
@@ -209,11 +199,11 @@ export default function MyBookingsPage() {
                             </button>
 
                             {/* แสดง Receipt เฉพาะเมื่อ CONFIRMED เท่านั้น */}
-                            {booking.status.toString() === "CONFIRMED" && (
+                            {booking.status.toString() === "SUCCESS" && (
                               <button
                                 onClick={() =>
                                   window.open(
-                                    `/api/receipt/${booking.booking_id}`,
+                                    `/receipt/${booking.booking_id}`,
                                     "_blank",
                                   )
                                 }

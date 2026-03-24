@@ -10,7 +10,7 @@ function Header() {
   const homeHref = isAdmin ? "/admin" : "/";
   // ป้องกันการแสดงผลผิดพลาดขณะกำลังโหลดข้อมูล
   return (
-    <div className="flex w-full h-15 justify-between items-center bg-zinc-400 px-5 py-4">
+    <div className="flex w-full h-15 justify-between items-center bg-zinc-400 px-5 py-4 text-black">
       <div className="flex items-center">
         <FaTicketSimple size={35} />
         <p className="px-4 text-2xl font-bold tracking-tighter text-white-500">
