@@ -39,6 +39,7 @@ export const useOmisePayment = (bookingId: number, amount: number) => {
     try {
       console.log("🚀 1. ยิงไป Backend ด้วย payload:", payload); // เพิ่ม Log เพื่อเช็ค
       const res = await paymentService.createPayment(bookingId, payload);
+      
       console.log("✅ 2. Backend ตอบกลับมาว่า:", res); // เพิ่ม Log เพื่อเช็ค
 
       if (res?.success) {

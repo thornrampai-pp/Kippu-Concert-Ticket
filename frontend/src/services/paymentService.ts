@@ -14,7 +14,7 @@ export const paymentService ={
 
     } catch (err: unknown){
       const error = err as ApiError;
-      console.log(error)
+      console.log(`error: ${error}`)
       throw new Error(
         "Payment failed"
       );

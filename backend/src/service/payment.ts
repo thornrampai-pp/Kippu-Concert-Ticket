@@ -1,30 +1,30 @@
 import { BookingStatus, InvoiceStatus, PaymentStatus, SeatStatus } from "@prisma/client";
 
 export async function finalizeSuccessfulPayment(tx: any, booking: any, charge: any, userId: string) {
-  // 1. เปลี่ยนสถานะที่นั่งจาก RESERVED เป็น SOLD
-  const seatIds = booking.booking_items.map((item: any) => item.seat_id);
-  await tx.seat.updateMany({
-    where: { seat_id: { in: seatIds } },
+  const availabilityIds = booking.booking_items.map(
+    (item: any) => item.availability_id
+  );
+
+  await tx.seatAvailability.updateMany({
+    where: {
+      availability_id: { in: availabilityIds }
+    },
     data: {
       status: SeatStatus.SOLD,
-      reserved_until: null // เคลียร์เวลาล็อคออก
+      reserved_until: null
     }
   });
 
-  // อัปเดตสถานะการจองเป็น SUCCESS
   await tx.booking.update({
     where: { booking_id: booking.booking_id },
     data: { status: BookingStatus.SUCCESS }
   });
 
-  //  อัปเดต Invoice เป็น PAID
   await tx.invoice.updateMany({
     where: { booking_id: booking.booking_id },
     data: { status: InvoiceStatus.PAID }
   });
 
-  //  บันทึกข้อมูลการชำระเงิน พร้อมเวลา paid_at
-  // ใช้ upsert เพื่อกันกรณี Webhook กับ Controller ทำงานซ้ำซ้อนกัน
   await tx.payment.upsert({
     where: { transaction_id: charge.id },
     update: {

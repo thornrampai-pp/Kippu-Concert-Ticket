@@ -7,7 +7,6 @@ import { finalizeSuccessfulPayment } from "../service/payment";
 export const createPayment = async(req:Request,res:Response) =>{
   const { bookingId, token, source } = req.body;
   const userId = req.user?.uid;
-  console.log("📥 Received Source ID:", source);
 
   if(!userId) return res.status(404).json({success:false,message:"Unauthorized"});
 
@@ -100,12 +99,14 @@ export const createPayment = async(req:Request,res:Response) =>{
       success: true, message: "Payment successful"
     });
     } else if (charge.status === 'pending'){
+      const method = charge.card ? 'credit_card' : (charge.source?.type || 'unknown');
+
       await prisma.payment.create({
         data: {
           user_id: userId,
           booking_id: bookingData.booking_id,
           amount: bookingData.total_price,
-          payment_method: charge.source?.type || 'credit_card',
+          payment_method: method,
           transaction_id: charge.id,
           status: PaymentStatus.PENDING
         }
@@ -113,12 +114,13 @@ export const createPayment = async(req:Request,res:Response) =>{
       return res.status(200).json({
         success: true,
         status: 'pending',
-        authorize_uri: charge.authorize_uri,
-        download_uri: charge.source?.scannable_code?.image?.download_uri
+        authorize_uri: charge.authorize_uri ?? null,
+        download_uri: charge.source?.scannable_code?.image?.download_uri ?? null
       });
-  }
+    }
   }catch(e){
     console.log(e);
+    console.error("🔥 OMISE ERROR FULL:", e);
     res.status(500).json({ success: false, message: "Server error" });
   }
 

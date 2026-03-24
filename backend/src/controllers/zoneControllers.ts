@@ -247,6 +247,7 @@ export const getZonesByConcert = async (req: Request<UpdateParams, {}, {}>, res:
 
 
 // GET
+
 export const getZoneLayout = async (req: Request<UpdateParams, {}, {}>, res: Response) => {
   const { id: zone_id } = req.params;
   const { showtime_id } = req.query;
@@ -279,7 +280,7 @@ export const getZoneLayout = async (req: Request<UpdateParams, {}, {}>, res: Res
     // เพื่อให้ Frontend ใช้งานง่ายเหมือนเดิม
     const formattedData = {
       ...zone,
-      seats: zone.seats_master.map(master => ({
+      availabilities: zone.seats_master.map(master => ({
         seat_id: master.seat_id,
         seat_number: master.seat_number,
         row_label: master.row_label,

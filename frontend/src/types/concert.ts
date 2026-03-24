@@ -69,7 +69,12 @@ export interface SeatAvailability {
   seat_id: number;
   status: SeatStatus;
   reserved_until?: string | null;
-
+  
+  
+  seat_number: string;
+  row_label: string;
+  column_num: number;
+ 
   seat?: SeatMaster; 
   showtime?: Showtime;
 }
@@ -148,4 +153,18 @@ export interface ApiError {
     };
   };
   message: string;
+}
+
+export interface PendingSeat {
+  id: number;
+  name: string;
+}
+
+export interface SeatAvailabilityFlat {
+  availability_id: number;
+  seat_id: number;
+  seat_number: string;
+  row_label: string;
+  column_num: number;
+  status: SeatStatus;
 }

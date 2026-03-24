@@ -48,7 +48,10 @@ export const createBooking = async (req: Request<{}, {}, CreateBookingBody>, res
       });
 
       if (seatAvails.length !== uniqueAvailIds.length) {
-        throw new Error("บางที่นั่งไม่ว่างหรือถูกจองไปแล้ว");
+        const foundIds = seatAvails.map(s => s.availability_id);
+        const missingIds = uniqueAvailIds.filter(id => !foundIds.includes(id));
+
+        throw new Error(`ที่นั่ง ID [${missingIds.join(', ')}] ไม่ว่างหรือไม่มีในระบบ`);
       }
 
       //  ล็อคสถานะที่นั่ง (Optimistic Locking) ที่ตาราง SeatAvailability
@@ -143,7 +146,8 @@ export const getMyBooking = async (req: Request, res: Response) => {
           include: {
             availability: {
               include: {
-                seat: { include: { zone: true } }
+                seat: { include: { zone: true } },
+                showtime: true
               }
             }
           }

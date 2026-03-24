@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { bookingService } from "@/src/services/bookingService";
 import { Booking } from "@/src/types";
 import { useRouter } from "next/navigation";
+
+
 export const useBooking = () => {
   const saveBooking = (data: PendingBooking) => {
     if (typeof window !== "undefined") {
@@ -81,7 +83,7 @@ export const useBookingStatus = (bookingId: number) => {
       } catch (err) {
         console.error(err);
       }
-    }, 3000); // ✅ 3 วินาที
+    }, 10000); 
 
     return () => clearInterval(interval);
   }, [bookingId, router]);

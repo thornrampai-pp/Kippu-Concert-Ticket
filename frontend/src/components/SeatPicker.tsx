@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Circle, Layer, Stage, Rect, Text, Group } from "react-konva"; // ✅ เพิ่ม Rect, Text, Group
-import { Concert, Seat, Zone } from "../types";
+import { Concert, SeatAvailability, Zone } from "../types";
 import { useZone } from "../hooks/useConcert";
 import { useRouter } from "next/navigation";
 import { useBooking } from "../hooks/useBooking";
@@ -20,20 +20,32 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
 
   // ใน SeatPicker.tsx
   const [selectedSeats, setSelectedSeats] = useState<
-    { id: number; name: string }[]
+    { availabilityId: number; name: string }[]
   >([]);
 
-  const handleSeatClick = (seat: Seat) => {
+  const handleSeatClick = (seat: SeatAvailability) => {
     setSelectedSeats((prev) => {
-      const isSelected = prev.find((s) => s.id === seat.seat_id);
+      // 🚩 ใน SeatAvailability มีตัวตนจริงๆ คือ availability_id
+      const isSelected = prev.find(
+        (s) => s.availabilityId === seat.availability_id,
+      );
+
       if (isSelected) {
-        return prev.filter((s) => s.id !== seat.seat_id);
+        return prev.filter((s) => s.availabilityId !== seat.availability_id);
       }
+
       if (prev.length >= concert.max_tickets_per_user) {
         alert(`จองได้สูงสุด ${concert.max_tickets_per_user} ที่นั่ง`);
         return prev;
       }
-      return [...prev, { id: seat.seat_id, name: seat.seat_number }];
+
+      return [
+        ...prev,
+        {
+          availabilityId: seat.availability_id,
+          name: seat.seat_number,
+        },
+      ];
     });
   };
 
@@ -42,7 +54,7 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
     const selectedShowtime = concert.show_times?.find(
       (s) => s.showtime_id === showtimeId,
     );
-
+    console.log(selectedSeats);
     // 2. แปลงวันที่ให้เป็น Format ที่อ่านง่าย (Human Readable)
     const formattedDate = selectedShowtime
       ? new Date(selectedShowtime.show_date).toLocaleString("th-TH", {
@@ -59,7 +71,7 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
       concertLocation: concert.location || "สถานที่จัดงาน",
       showtimeId: showtimeId!,
       showtime: formattedDate,
-
+      
       zoneId: zone.zone_id,
       zoneName: zone.zone_name,
       price: Number(zone.price),
@@ -81,7 +93,7 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
       </div>
     );
-  if (!zoneLayout || !zoneLayout.seats) return null;
+  if (!zoneLayout || !zoneLayout.availabilities) return null;
 
   return (
     <div className="flex flex-col items-center bg-zinc-950 p-6 rounded-3xl border border-zinc-800 shadow-2xl">
@@ -133,37 +145,42 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
             </Group>
 
             {/* 🎟️ 2. วาดที่นั่ง (Seats) */}
-            {zoneLayout.seats.map((seat: Seat) => {
-              // ปรับค่า Offset Y ลงมาหน่อยเพื่อให้ไม่ทับเวที (เช่น +100)
+            {zoneLayout.availabilities.map((avail: SeatAvailability) => {
+              
+
               const zoneStartX = zoneLayout.pos_x;
               const zoneStartY = zoneLayout.pos_y;
 
-              const seatGapX = 45; // ห่างกันแนวนอน 45px
-              const seatGapY = 45; // ห่างกันแนวตั้ง 45px
+              const seatGapX = 45;
+              const seatGapY = 45;
 
-              const rowOffset = (seat.row_label.charCodeAt(0) - 65) * seatGapY;
-              const colOffset = (seat.column_num - 1) * seatGapX;
+              // 🚩 2. เปลี่ยนมาใช้ข้อมูลจาก master (SeatMaster)
+              const rowOffset = (avail.row_label!.charCodeAt(0) - 65) * seatGapY;
+
+              const colOffset = (avail.column_num! - 1) * seatGapX;
 
               const x = zoneStartX + colOffset + 20;
               const y = zoneStartY + rowOffset + 20;
 
-              const isAvailable = seat.status === "AVAILABLE";
+              const isAvailable = avail.status === "AVAILABLE";
+
+              // 🚩 3. เช็คการเลือกโดยใช้ availability_id แทน id
               const isSelected = selectedSeats.some(
-                (s) => s.id === seat.seat_id,
+                (s) => s.availabilityId === avail.availability_id,
               );
 
               return (
-                <Group key={seat.seat_id}>
+                <Group key={avail.availability_id}>
                   <Circle
                     x={x}
                     y={y}
                     radius={16}
                     fill={
                       !isAvailable
-                        ? "#18181b" // จองแล้ว
+                        ? "#18181b"
                         : isSelected
-                          ? "#10b981" // เลือกอยู่
-                          : "#3f3f46" // ว่าง
+                          ? "#10b981"
+                          : "#3f3f46"
                     }
                     stroke={
                       isSelected
@@ -175,14 +192,15 @@ const SeatPicker = ({ concert,zone, showtimeId, onCancel }: SeatPickerProps) => 
                     strokeWidth={2}
                     shadowColor="black"
                     shadowBlur={isSelected ? 10 : 0}
-                    onClick={() => isAvailable && handleSeatClick(seat)}
-                    onTap={() => isAvailable && handleSeatClick(seat)}
+                    // 🚩 4. ส่ง avail (SeatAvailability) เข้าไปใน handleSeatClick
+                    onClick={() => isAvailable && handleSeatClick(avail)}
+                    onTap={() => isAvailable && handleSeatClick(avail)}
                   />
                   {/* ตัวเลข/อักษรบนที่นั่ง */}
                   <Text
                     x={x - 15}
                     y={y - 5}
-                    text={seat.seat_number}
+                    text={avail.seat_number} // 🚩 5. ดึงเลขที่นั่งจาก master
                     width={30}
                     align="center"
                     fontSize={9}

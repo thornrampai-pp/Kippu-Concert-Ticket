@@ -23,9 +23,12 @@ const ConfirmBookingPage = () => {
 
   const handleFinalConfirm = async () => {
     if (!bookingData) return;
+    console.log("Current Seats in Session:", bookingData.seats);
+
     setIsSubmitting(true);
 
     try {
+     
       const availabilityIds = bookingData.seats.map(
         (s) => s.availabilityId || s.availabilityId,
       );
@@ -46,7 +49,7 @@ const ConfirmBookingPage = () => {
       const errorMessage =
         error.response?.data?.message || error.message || "เกิดข้อผิดพลาด";
       alert(errorMessage);
-    
+
       router.back(); // ส่งกลับไปเลือกที่นั่งใหม่
     } finally {
       setIsSubmitting(false);
