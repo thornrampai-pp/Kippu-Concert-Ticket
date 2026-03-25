@@ -37,13 +37,13 @@ export const updateProfile = async (req: Request<{}, {}, UpdateProfileBody>, res
     });
   }
 
-  const { user_name, phoneNumber, image_url } = req.body;
+  const { user_name, phone_number, image_url } = req.body;
   try {
     const updateUser = await prisma.user.update({
       where: { user_id: userId },
       data: {
         ...(user_name !== undefined && { user_name }),
-        ...(phoneNumber !== undefined && { phoneNumber }),
+        ...(phone_number !== undefined && { phone_number }),
         ...(image_url !== undefined && { image_url }),
       },
     });

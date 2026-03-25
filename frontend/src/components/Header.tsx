@@ -8,7 +8,6 @@ import { useAuthContext } from "../context/authContext";
 function Header() {
   const { handleLogout, user, isAdmin } = useAuthContext();
   const homeHref = isAdmin ? "/admin" : "/";
-  // ป้องกันการแสดงผลผิดพลาดขณะกำลังโหลดข้อมูล
   return (
     <div className="flex w-full h-15 justify-between items-center bg-zinc-400 px-5 py-4 text-black">
       <div className="flex items-center">
@@ -28,18 +27,22 @@ function Header() {
             Log out
           </button>
         ) : (
-          <div className="cursor-pointer">
-            <FaCircleUser size={40} />
-             {/* <Image
-            src={user}
-            alt="profile"
-            width={40}
-            height={40}
-            className="rounded-full" 
-            /> */}
-            {/* // onClick={} */}
-            {/* /> */}
-          </div>
+          <Link href="/proflie" className="cursor-pointer">
+            {user?.image_url ? (
+              <Image
+                src={user.image_url}
+                alt="profile"
+                width={40}
+                height={40}
+                className="rounded-full object-cover border-2 border-transparent hover:border-white transition-all"
+              />
+            ) : (
+              <FaCircleUser
+                size={40}
+                className="text-zinc-400 hover:text-white transition-colors"
+              />
+            )}
+          </Link>
         )}
       </div>
     </div>

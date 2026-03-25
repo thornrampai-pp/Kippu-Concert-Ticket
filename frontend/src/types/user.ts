@@ -3,7 +3,7 @@ export interface User {
   user_name: string;
   phone_number?: string;
   email: string;
-  image_url?: string;
+  image_url: string;
   status: boolean;
   role_id: number;
 

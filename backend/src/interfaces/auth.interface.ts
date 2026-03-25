@@ -7,6 +7,6 @@ export interface LoginGoogleBody {
 
 export interface UpdateProfileBody {
   user_name?: string;
-  phoneNumber?: string;
+  phone_number?: string;
   image_url?: string;
 }

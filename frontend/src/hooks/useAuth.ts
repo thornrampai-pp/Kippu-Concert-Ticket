@@ -5,14 +5,14 @@ import { auth } from "../lib/firebase";
 import { authService } from "../services/authService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User } from "../types";
+import { UpdateProfileInput, User } from "../types";
 import { useAuthContext } from "../context/authContext";
 
 export const useAuth = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-
+  const [isUpdating, setIsUpdating] = useState(false); 
 
   useEffect(() => {
     const unsubscribe = auth.onIdTokenChanged(async (firebaseUser) => {
@@ -92,8 +92,32 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   };
+  const updateProfile = async (data: UpdateProfileInput) => {
+    setIsUpdating(true);
+    try {
+      const updatedUser = await authService.updateProfile(data);
 
-  return { loginGoogle, handleLogout, isLoading, user };
+      setUser((prev) => {
+        if (!prev) return null;
+
+        return {
+          ...prev,
+          ...updatedUser, // ✅ ใช้ค่าจริงจาก backend
+        };
+      });
+
+      return { success: true };
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Update Error:", err);
+      return { success: false, message: "อัปเดตข้อมูลไม่สำเร็จ" };
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+
+  return { loginGoogle, handleLogout, isLoading, user, updateProfile, isUpdating };
 };
 
 export const useAdminGuard = () => {
@@ -116,3 +140,4 @@ export const useAdminGuard = () => {
     isAdmin: user?.role?.role_id === 2
   };
 };
+
