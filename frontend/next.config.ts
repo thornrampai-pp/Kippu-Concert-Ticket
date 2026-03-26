@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
         // สิ่งที่ User เห็นใน Inspect: /api/v1/users
         source: '/api/v1/:path*',
         // ปลายทางจริงที่ซ่อนไว้ใน .env: https://your-backend.onrender.com/users
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+        destination: `${process.env.BACKEND_URL}/:path*`,
       },
     ];
   },
