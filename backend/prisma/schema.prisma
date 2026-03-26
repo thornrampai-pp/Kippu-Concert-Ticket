@@ -101,7 +101,6 @@ model SeatMaster {
   row_label    String
   column_num   Int
   
-  // 🚩 เชื่อมไปยังสถานะรายรอบ
   availabilities SeatAvailability[]
 
   @@unique([zone_id, seat_number])
@@ -116,7 +115,6 @@ model SeatAvailability {
   status          SeatStatus    @default(AVAILABLE)
   reserved_until  DateTime?
   
-  // 🚩 เชื่อมกับรายการจอง
   booking_items   BookingItem[]
 
   @@unique([showtime_id, seat_id])
@@ -129,7 +127,6 @@ model BookingItem {
   booking_id      Int
   booking         Booking          @relation(fields: [booking_id], references: [booking_id])
   
-  // 🚩 แก้ไข: ชี้มาที่ SeatAvailability
   availability_id Int
   availability    SeatAvailability @relation(fields: [availability_id], references: [availability_id])
 
