@@ -1,6 +1,6 @@
 import cron from 'node-cron';
-import prisma from '../lib/prisma';
 import { SeatStatus, BookingStatus, InvoiceStatus } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 
 // รันทุกๆ 1 นาที
 cron.schedule('* * * * *', async () => {

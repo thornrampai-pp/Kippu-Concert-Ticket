@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { omiseWebhookHandler } from "../controllers/paymentControllers";
+import { omiseWebhookHandler } from "../controllers/paymentControllers.js";
 
 const routes = Router()
 

@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import Omise from "omise";
+import Omise from "omise"; 
 dotenv.config({ quiet: true })
 
 type EnvConfig = {
@@ -27,15 +27,10 @@ export const ENV: EnvConfig = {
   
 };
 
-export const omiseClient = Omise({
+export const omiseClient = (Omise as any)({
   publicKey: ENV.OMISE_PUBLIC_KEY,
   secretKey: ENV.OMISE_SECRET_KEY,
 });
 
 
-console.log("🔥 SECRET:", ENV.OMISE_SECRET_KEY);
-console.log("DB URL Check:", ENV.DATABASE_URL ? "Found" : "Not Found");
-console.log(ENV.PORT);
-// console.log(ENV.DATABASE_URL);
-// console.log(ENV.DIRECT_URL);
 

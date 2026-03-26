@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { createBooking, getBookingById, getMyBooking } from "../controllers/bookingControllers";
-import { verifyToken, } from "../middlewares/authMiddleware";
+import { verifyToken } from "../middlewares/authMiddleware.js";
+import { createBooking, getBookingById, getMyBooking } from "../controllers/bookingControllers.js";
 
 
 

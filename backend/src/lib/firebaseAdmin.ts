@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { ENV } from "../config/env";
+import { ENV } from "../config/env.js";
 
 if (!getApps().length) {
   initializeApp({

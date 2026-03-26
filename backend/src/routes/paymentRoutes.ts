@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { createPayment, getPaymentStatus, getReceipt } from "../controllers/paymentControllers";
-import { verifyToken, } from "../middlewares/authMiddleware";
-import { validateCreatePayment, } from "../middlewares/paymentMiddleware";
+import { verifyToken } from "../middlewares/authMiddleware.js";
+import { createPayment, getPaymentStatus, getReceipt } from "../controllers/paymentControllers.js";
+import { validateCreatePayment } from "../middlewares/paymentMiddleware.js";
 
 const routes = Router()
 

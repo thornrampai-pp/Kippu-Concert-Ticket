@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { getUser, updateProfile } from "../controllers/userControllers";
-import { loginGoogle, logoutGoogle, refreshToken } from "../controllers/authControllers";
-import { verifyToken } from "../middlewares/authMiddleware";
+import { loginGoogle, logoutGoogle, refreshToken } from "../controllers/authControllers.js";
+import { getUser, updateProfile } from "../controllers/userControllers.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 

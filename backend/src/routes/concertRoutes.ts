@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { getAllConcert, getConcertById,createConcert,updateConcert, getAdminConcerts } from "../controllers/concertController";
-import { verifyToken,isAdmin } from "../middlewares/authMiddleware";
+import { isAdmin, verifyToken } from "../middlewares/authMiddleware.js";
+import { createConcert, getAdminConcerts, getAllConcert, getConcertById, updateConcert } from "../controllers/concertController.js";
 
 const router = Router();
 

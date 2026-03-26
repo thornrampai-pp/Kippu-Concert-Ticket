@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { auth } from "../lib/firebaseAdmin";
-import prisma from "../lib/prisma";
+import { auth } from "../lib/firebaseAdmin.js";
+import prisma from "../lib/prisma.js";
 
 export const verifyToken = async (
   req: Request,

@@ -1,14 +1,13 @@
 import express, { Request, Response } from "express";
-import { ENV } from "./config/env";
-import userRouter from "./routes/userRoutes"; 
-import concertRouter from "./routes/concertRoutes";
-import zoneRouter from "./routes/zoneRoutes";
-import bookingRouter from "./routes/bookingRoutes"
-import paymentRouter from './routes/paymentRoutes'
-import webHookRouter from './routes/webhookRoutes'
 import cors from 'cors'
 import cookieParser from "cookie-parser";
-import './job/expireBooking'
+import { ENV } from "./config/env.js";
+import userRouter from './routes/userRoutes.js'
+import concertRouter from './routes/concertRoutes.js'
+import zoneRouter from './routes/zoneRoutes.js';
+import bookingRouter  from './routes/bookingRoutes.js'
+import paymentRouter  from './routes/paymentRoutes.js'
+import webHookRouter  from './routes/webhookRoutes.js'
 
 const app = express();
 
