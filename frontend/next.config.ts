@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        // สิ่งที่ User เห็นใน Inspect: /api/v1/users
+        source: '/api/v1/:path*',
+        // ปลายทางจริงที่ซ่อนไว้ใน .env: https://your-backend.onrender.com/users
+        destination: `${process.env.BACKEND_URL}/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
