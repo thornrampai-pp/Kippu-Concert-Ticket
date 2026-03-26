@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    console.log(`🚀 Mapping /api/v1 to:${process.env.BACKEND_URL} `); 
     return [
       {
         // สิ่งที่ User เห็นใน Inspect: /api/v1/users
