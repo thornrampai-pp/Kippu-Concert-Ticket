@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import prisma from "../lib/prisma";
-import { CreateConcertBody, UpdateConcertBody, UpdateParams } from "../interfaces/concert.interface";
 import { SeatStatus } from "@prisma/client";
 import { runInNewContext } from "node:vm";
+import prisma from "../lib/prisma.js";
+import { CreateConcertBody, UpdateConcertBody, UpdateParams } from "../interfaces/concert.interface.js";
 
 
 // GET

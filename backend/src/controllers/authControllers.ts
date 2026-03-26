@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import prisma  from "../lib/prisma";
-import { auth } from '../lib/firebaseAdmin'
-import { LoginGoogleBody } from "../interfaces/auth.interface";
+import { auth } from "../lib/firebaseAdmin.js";
+import prisma from "../lib/prisma.js";
+import { LoginGoogleBody } from "../interfaces/auth.interface.js";
 
 export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Response) => {
   const { idToken } = req.body;

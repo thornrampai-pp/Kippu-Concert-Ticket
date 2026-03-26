@@ -1,7 +1,8 @@
 import { BookingStatus, InvoiceStatus, SeatStatus } from "@prisma/client";
-import { CreateBookingBody, InputParams } from "../interfaces/booking.interface"
-import prisma from "../lib/prisma";
+
 import { Request, Response } from "express";
+import prisma from "../lib/prisma.js";
+import { CreateBookingBody } from "../interfaces/booking.interface.js";
 
 
 export const createBooking = async (req: Request<{}, {}, CreateBookingBody>, res: Response) => {

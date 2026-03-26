@@ -1,8 +1,8 @@
-import { ENV, omiseClient } from "../config/env"
 import { Request, Response } from "express";
-import prisma from "../lib/prisma";
 import { BookingStatus, InvoiceStatus, PaymentStatus } from "@prisma/client";
-import { finalizeSuccessfulPayment } from "../service/payment";
+import prisma from "../lib/prisma.js";
+import { ENV, omiseClient } from "../config/env.js";
+import { finalizeSuccessfulPayment } from "../service/payment.js";
 
 export const createPayment = async(req:Request,res:Response) =>{
   const { bookingId, token, source } = req.body;
