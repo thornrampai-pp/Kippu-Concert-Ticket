@@ -2,13 +2,13 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./",
+    "rootDir": "./src",
     "outDir": "./dist",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "esnext",
-    "moduleResolution": "Bundler", // ตัวนี้จะทำให้ไม่ต้องใส่ .js ท้ายไฟล์
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext", // ตัวนี้จะทำให้ไม่ต้องใส่ .js ท้ายไฟล์
     "target": "esnext",
     // For nodejs:
     "lib": ["esnext"],
@@ -42,6 +42,6 @@
     "skipLibCheck": true,
     "esModuleInterop": true, // เพิ่มตัวนี้เพื่อให้ Import library ทั่วไปง่ายขึ้น
   },
-  "include": ["src/**/*","prisma.config.ts"], // บอกให้ include เฉพาะไฟล์ใน src
+  "include": ["src/**/*"], // บอกให้ include เฉพาะไฟล์ใน src
   "exclude": ["node_modules","dist"] // เพิ่ม prisma.config.ts เข้าไปที่นี่
 }

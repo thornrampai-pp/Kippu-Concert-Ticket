@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
-import  prisma  from "../lib/prisma";
-import { UpdateProfileBody } from "../interfaces/auth.interface";
+import prisma from "../lib/prisma.js";
+import { UpdateProfileBody } from "../interfaces/auth.interface.js";
 
 export const getUser = async (req: Request, res: Response) => {
   const userId = req.user?.uid;

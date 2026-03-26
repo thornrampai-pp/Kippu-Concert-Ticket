@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import prisma from "../lib/prisma";
-import { UpdateParams, UpdateZoneDetailBody, UpdateZoneSeatDetail, ZoneInput } from "../interfaces/concert.interface";
 import { SeatStatus } from "@prisma/client";
+import prisma from "../lib/prisma.js";
+import { UpdateParams, UpdateZoneDetailBody, UpdateZoneSeatDetail, ZoneInput } from "../interfaces/concert.interface.js";
 
 
 export const updateZoneDetail = async (req: Request<UpdateParams, {}, UpdateZoneDetailBody>, res: Response) => {
