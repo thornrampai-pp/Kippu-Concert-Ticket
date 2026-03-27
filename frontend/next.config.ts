@@ -16,17 +16,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    console.log(`🚀 Mapping /api/v1 to:${process.env.NEXT_PUBLIC_BACKEND_URL} `); 
-    return [
-      {
-        // สิ่งที่ User เห็นใน Inspect: /api/v1/users
-        source: '/api/v1/:path*',
-        // ปลายทางจริงที่ซ่อนไว้ใน .env: https://your-backend.onrender.com/users
-        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL}/:path*`,
-      },
-    ];
-  },
+  
 };
 
 export default nextConfig;
