@@ -27,9 +27,10 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
 
     res.cookie("token", idToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: "lax",
-      maxAge: 60 * 60 * 1000 // 1 ชม.
+      secure: true,      // บังคับเป็น true เพราะใช้ SameSite None
+      sameSite: "none",  // สำคัญมาก: เพื่อให้ Cookie ส่งข้าม Domain บน Render ได้
+      maxAge: 60 * 60 * 1000, // 1 ชม.
+      path: "/",
     });
 
     return res.status(200).json({
@@ -65,9 +66,10 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     res.cookie("token", idToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 1000 // 1 ชั่วโมง
+      secure: true,      // บังคับเป็น true เพราะใช้ SameSite None
+      sameSite: "none",  // สำคัญมาก: เพื่อให้ Cookie ส่งข้าม Domain บน Render ได้
+      maxAge: 60 * 60 * 1000, // 1 ชม.
+      path: "/",
     });
 
     return res.status(200).json({ success: true });
