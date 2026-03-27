@@ -9,7 +9,8 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
   try {
     const decodeToken = await auth.verifyIdToken(idToken);
     const { uid, email, name, picture } = decodeToken;
-
+    const isProduction = process.env.NODE_ENV === "production";
+    
     const user = await prisma.user.upsert({
       where: { user_id: uid },
       update: {
@@ -27,9 +28,9 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
 
     res.cookie("token", idToken, {
       httpOnly: true,
-      secure: true,      // บังคับเป็น true เพราะใช้ SameSite None
-      sameSite: "none",  // สำคัญมาก: เพื่อให้ Cookie ส่งข้าม Domain บน Render ได้
-      maxAge: 60 * 60 * 1000, // 1 ชม.
+      secure: isProduction, // บน localhost เป็น false, บน Render เป็น true
+      sameSite: isProduction ? "none" : "lax", // บน localhost ใช้ lax ได้เพราะเป็น domain เดียวกัน
+      maxAge: 60 * 60 * 1000,
       path: "/",
     });
 
@@ -49,10 +50,10 @@ export const logoutGoogle = async (req: Request, res: Response) => {
    
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,      // ต้องตรงกับตอน Login
+      sameSite: "none",  
+      path: "/",         // ต้องตรงกัน
     });
-
     return res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (e) {
     return res.status(500).json({ success: false, message: "Logout failed" });
