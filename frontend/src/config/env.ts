@@ -1,6 +1,6 @@
 
 export const ENV = {
-  API_URL: process.env.BACKEND_URL,
+  API_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
   FIREBASE: {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
