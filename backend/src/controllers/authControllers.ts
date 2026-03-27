@@ -55,6 +55,7 @@ export const logoutGoogle = async (req: Request, res: Response) => {
       secure: true,      // ต้องตรงกับตอน Login
       sameSite: "none",  
       path: "/",         // ต้องตรงกัน
+      domain: isProduction ? ".onrender.com" : undefined,
     });
     return res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (e) {

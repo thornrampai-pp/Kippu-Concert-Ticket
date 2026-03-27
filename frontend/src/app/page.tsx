@@ -5,9 +5,7 @@ import { useConcert } from "../hooks/useConcert";
 
 export default function Home() {
 const { concerts, isLoading, error } = useConcert();
-  // const router = useRouter();
 
-  // ปล่อยให้ Guard จัดการเรื่อง Redirect แต่เราจะ Render โครงสร้างหลักรอไว้
   return (
     <div className="min-h-screen bg-zinc-900">
       <Header />
