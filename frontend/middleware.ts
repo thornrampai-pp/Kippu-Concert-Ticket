@@ -5,6 +5,8 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
+  if (pathname === '/') return NextResponse.next();
+  
   // 1. ปล่อยผ่านถ้าเป็นหน้า Login หรือไฟล์ Static
   if (pathname.startsWith('/login') || pathname.startsWith('/_next') || pathname.includes('.')) {
     return NextResponse.next();
