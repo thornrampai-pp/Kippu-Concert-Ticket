@@ -27,7 +27,7 @@ function Header() {
             Log out
           </button>
         ) : (
-          <Link href="/proflie" className="cursor-pointer">
+          <Link href="/profile" className="cursor-pointer">
             {user?.image_url ? (
               <Image
                 src={user.image_url}
