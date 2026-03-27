@@ -2,18 +2,23 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // 1. ดึงคุกกี้ที่ชื่อ "token" (ตามที่ Backend ส่งมาใน res.cookie)
   const token = request.cookies.get('token')?.value;
+  const { pathname } = request.nextUrl;
 
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login');
+  // 1. ปล่อยผ่านถ้าเป็นหน้า Login หรือไฟล์ Static
+  if (pathname.startsWith('/login') || pathname.startsWith('/_next') || pathname.includes('.')) {
+    return NextResponse.next();
+  }
 
-  //  ถ้าไม่มี Token และไม่ได้อยู่ที่หน้า Login -> ให้ไปหน้า Login
-  if (!token && !isLoginPage) {
+  // 2. ถ้าไม่มี Token ให้ส่งไปหน้า Login
+  if (!token) {
+    // ใช้ rewrite แทน redirect ในบางกรณีอาจจะช่วยเลี่ยง loop ได้ 
+    // แต่ถ้าจะใช้ redirect ต้องมั่นใจว่า URL ถูกต้อง
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  //  ถ้ามี Token แล้วแต่ยังจะเข้าหน้า Login -> ให้ไปหน้าแรก (Home)
-  if (token && isLoginPage) {
+  // 3. ถ้ามี Token และพยายามเข้าหน้า Login ให้กลับไปหน้า Home
+  if (token && pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
