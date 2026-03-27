@@ -16,7 +16,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+  async rewrites() {
+    return [
+      {
+        // เมื่อ Frontend เรียก /api/something
+        source: "/api/:path*",
+        // ให้ส่งไปที่ Backend URL จริงๆ ของคุณ
+        destination: "https://kippu-backend.onrender.com/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

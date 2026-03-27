@@ -29,12 +29,11 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
 
     res.cookie("token", idToken, {
       httpOnly: true,
-      secure: isProduction, // บน localhost เป็น false, บน Render เป็น true
-      sameSite: isProduction ? "none" : "lax", // บน localhost ใช้ lax ได้เพราะเป็น domain เดียวกัน
+      secure: isProduction,
+      sameSite: "lax", // ✅ เปลี่ยนจาก "none" เป็น "lax" (ปลอดภัยและเสถียรกว่า)
       maxAge: 60 * 60 * 1000,
-      domain: isProduction ? ".onrender.com" : undefined,
       path: "/",
-    });
+         })
 
     return res.status(200).json({
       success: true,
@@ -52,11 +51,11 @@ export const logoutGoogle = async (req: Request, res: Response) => {
    
     res.clearCookie("token", {
       httpOnly: true,
-      secure: true,      // ต้องตรงกับตอน Login
-      sameSite: "none",  
-      path: "/",         // ต้องตรงกัน
-      domain: isProduction ? ".onrender.com" : undefined,
+      secure: isProduction,
+      sameSite: "lax",  // ✅ ให้ตรงกับตอน Login
+      path: "/",
     });
+
     return res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (e) {
     return res.status(500).json({ success: false, message: "Logout failed" });
@@ -70,10 +69,9 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     res.cookie("token", idToken, {
       httpOnly: true,
-      secure: true,      // บังคับเป็น true เพราะใช้ SameSite None
-      sameSite: "none",  // สำคัญมาก: เพื่อให้ Cookie ส่งข้าม Domain บน Render ได้
-      maxAge: 60 * 60 * 1000, // 1 ชม.
-      domain: isProduction ? ".onrender.com" : undefined,
+      secure: isProduction,
+      sameSite: "lax", // ✅ เปลี่ยนเป็น lax
+      maxAge: 60 * 60 * 1000,
       path: "/",
     });
 
