@@ -14,16 +14,17 @@ export const loginGoogle = async (req: Request<{}, {}, LoginGoogleBody>, res: Re
     
     const user = await prisma.user.upsert({
       where: { user_id: uid },
+      // 🚩 แก้ไขตรงนี้:
       update: {
-        user_name: name || uid,
-        image_url: picture || "", // ป้องกัน picture เป็น undefined
+     
+        email: email || "", 
       },
       create: {
         user_id: uid,
         email: email || "",
         user_name: name || uid,
         image_url: picture || "",
-        role_id: 1 
+        role_id: 1
       }
     });
 
